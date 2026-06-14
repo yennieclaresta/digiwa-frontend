@@ -1,27 +1,40 @@
 import { Tabs } from 'expo-router';
+import { PlatformPressable } from 'expo-router/build/react-navigation/elements';
 import { FiArchive, FiCheckSquare, FiGrid, FiPrinter, FiUser } from 'react-icons/fi';
 
 import { ReactIcon } from '@/components/digiwa';
 import { RoleGuard } from '@/components/RoleGuard';
-import { colors, radius, spacing } from '@/constants/theme';
+import { colors } from '@/constants/theme';
 
 export default function AdminTabsLayout() {
   return (
     <RoleGuard role="admin">
-      <Tabs
+<Tabs
         screenOptions={{
-          headerShown: false,
+          headerShown: true,
+          sceneStyle: {
+            backgroundColor: colors.primaryLight,
+          },
           tabBarActiveTintColor: colors.primary,
           tabBarInactiveTintColor: colors.neutral,
-          tabBarLabelStyle: { fontWeight: '800', fontSize: 11 },
+          tabBarButton: ({ children, android_ripple, ...props }: any) => (
+            <PlatformPressable
+              {...props}
+              pressOpacity={1}
+              android_ripple={{
+                color: colors.neutral,
+                borderless: true,
+                ...(android_ripple ?? {}),
+              }}
+            >
+              {children}
+            </PlatformPressable>
+          ),
+          tabBarLabelStyle: { fontWeight: '800', fontSize: 10 },
           tabBarStyle: {
-            backgroundColor: colors.surface,
-            borderTopColor: colors.border,
-            borderTopWidth: 1,
-            minHeight: 70,
-            paddingTop: spacing.xs,
-            borderTopLeftRadius: radius.lg,
-            borderTopRightRadius: radius.lg,
+            backgroundColor: colors.primaryLight,
+            elevation: 0,
+            minHeight: 60,
           },
         }}
       >
