@@ -1,19 +1,19 @@
 import { useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { Controller, useForm, useWatch } from 'react-hook-form';
+import { FiLogIn, FiUserPlus } from 'react-icons/fi';
 import {
+  ActivityIndicator,
   Image,
   Pressable,
   StyleSheet,
   Text,
   View,
 } from 'react-native';
-import { FiLogIn, FiUserPlus } from 'react-icons/fi';
 
 import {
   AppHeader,
   CheckRow,
-  LoadingState,
   PrimaryButton,
   Screen,
   SelectField,
@@ -70,12 +70,13 @@ export function SplashScreen() {
   return (
     <Screen scroll={false}>
       <View style={styles.splash}>
-        <View style={styles.logoWrap}>
-          <Image source={require('../../assets/digiwa.png')} style={styles.logo} resizeMode="contain" />
-        </View>
+        <Image source={require('../../assets/digiwa.png')} style={styles.logo} resizeMode="contain" />
         <Text style={styles.appName}>DIGIWA</Text>
         <Text style={styles.subtitle}>Digitalisasi Data Warga</Text>
-        <LoadingState message="Menyiapkan layanan..." />
+        <View style={styles.splashLoading}>
+          <ActivityIndicator color={colors.primary} />
+          <Text style={styles.splashLoadingText}>Menyiapkan layanan...</Text>
+        </View>
       </View>
     </Screen>
   );
@@ -384,20 +385,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     gap: spacing.md,
-  },
-  logoWrap: {
-    width: 118,
-    height: 118,
-    borderRadius: radius.xl,
-    backgroundColor: colors.surface,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderWidth: 1,
-    borderColor: colors.border,
+    backgroundColor: colors.background,
   },
   logo: {
-    width: 92,
-    height: 92,
+    width: 118,
+    height: 118,
   },
   appName: {
     color: colors.primary,
@@ -407,6 +399,16 @@ const styles = StyleSheet.create({
   subtitle: {
     color: colors.textSecondary,
     fontSize: typography.body,
+  },
+  splashLoading: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+    marginTop: spacing.sm,
+  },
+  splashLoadingText: {
+    color: colors.textSecondary,
+    fontSize: typography.bodySmall,
   },
   authBrand: {
     flexDirection: 'row',
