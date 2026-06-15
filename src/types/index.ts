@@ -15,7 +15,8 @@ export type User = {
   address: string;
   rt: string;
   rw: string;
-  password: string;
+  adminCode?: string;
+  position?: string;
 };
 
 export type UploadedFile = {
@@ -25,6 +26,10 @@ export type UploadedFile = {
   type: string;
   size: number;
   uploadedAt: string;
+  publicUrl?: string;
+  storagePath?: string;
+  fileCategory?: string;
+  downloadUrl?: string;
 };
 
 export type TimelineItem = {
@@ -33,6 +38,16 @@ export type TimelineItem = {
   title: string;
   description: string;
   createdAt: string;
+};
+
+export type GeneratedDocument = {
+  id: string;
+  requestId: string;
+  documentType: ServiceType;
+  fileName: string;
+  publicUrl: string;
+  downloadUrl?: string;
+  generatedAt: string;
 };
 
 export type CitizenRequest = {
@@ -49,6 +64,9 @@ export type CitizenRequest = {
   uploadedFiles: UploadedFile[];
   adminNote?: string;
   timeline: TimelineItem[];
+  generatedDocuments: GeneratedDocument[];
+  detail?: Record<string, unknown>;
+  serviceDisplayName?: string;
 };
 
 export type Notification = {
