@@ -1156,7 +1156,7 @@ VALUES (
   'super_admin',
   'active',
   'Admin DIGIWA',
-  'admin@digiwa.local',
+  'admin@digiwa.id',
   '080000000000',
   'CHANGE_THIS_TO_HASHED_PASSWORD'
 );

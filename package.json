@@ -46,6 +46,7 @@
     "start-clean": "expo start --clear",
     "reset-project": "node ./scripts/reset-project.js",
     "android": "expo start --android",
+    "android-clean": "expo start -c --android",
     "ios": "expo start --ios",
     "web": "expo start --web",
     "lint": "expo lint"
