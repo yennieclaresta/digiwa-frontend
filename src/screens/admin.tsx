@@ -1,6 +1,6 @@
 import { useRouter } from 'expo-router';
 import { useMemo, useState } from 'react';
-import { Alert, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Alert, Linking, Pressable, StyleSheet, Text, View } from 'react-native';
 import {
   FiActivity,
   FiArchive,
@@ -32,7 +32,6 @@ import {
 import { serviceIcons, serviceOptions, services, statusOptions } from '@/constants/services';
 import { colors, radius, spacing, typography } from '@/constants/theme';
 import { useApp } from '@/context/AppContext';
-import { generateMockPDF } from '@/services/pdfService';
 import type { RequestStatus, ServiceType } from '@/types';
 import { formatDateTime, serviceLabel, sortByNewest } from '@/utils/format';
 
@@ -198,7 +197,7 @@ export function AdminVerificationScreen() {
 }
 
 export function AdminPrintScreen() {
-  const { requests } = useApp();
+  const { requests, generateDocument } = useApp();
   const completedRequests = sortByNewest(requests.filter((request) => request.status === 'selesai'));
 
   async function handleGenerate(requestId: string) {
@@ -207,10 +206,10 @@ export function AdminPrintScreen() {
       return;
     }
     try {
-      const uri = await generateMockPDF(request);
-      Alert.alert('Download PDF', `Dokumen mock berhasil dibuat: ${uri}`);
-    } catch {
-      Alert.alert('Gagal menyimpan data. Silakan coba lagi.');
+      const document = request.generatedDocuments[0] ?? (await generateDocument(requestId));
+      await Linking.openURL(document.downloadUrl || document.publicUrl);
+    } catch (caught) {
+      Alert.alert(caught instanceof Error ? caught.message : 'Gagal menyimpan data. Silakan coba lagi.');
     }
   }
 

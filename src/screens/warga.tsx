@@ -218,8 +218,8 @@ export function WargaProfileScreen() {
         <InfoRow label="Email" value={currentUser?.email} />
       </View>
       <View style={styles.quickActions}>
-        <SecondaryButton title="Edit Profil" icon={FiEdit3} onPress={() => Alert.alert('Edit Profil', 'Fitur edit profil siap dihubungkan ke backend.')} />
-        <SecondaryButton title="Ubah Password" icon={FiCheckCircle} onPress={() => Alert.alert('Ubah Password', 'Fitur ubah password siap dihubungkan ke backend.')} />
+        <SecondaryButton title="Edit Profil" icon={FiEdit3} onPress={() => router.push('/profile/edit')} />
+        <SecondaryButton title="Ubah Password" icon={FiCheckCircle} onPress={() => router.push('/profile/password')} />
         <SecondaryButton title="Bantuan" icon={FiHelpCircle} onPress={() => Alert.alert('Bantuan', 'Hubungi admin kelurahan untuk bantuan penggunaan DIGIWA.')} />
         <PrimaryButton title="Keluar" icon={FiLogOut} onPress={handleLogout} />
       </View>

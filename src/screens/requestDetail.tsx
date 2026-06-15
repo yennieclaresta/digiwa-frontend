@@ -1,18 +1,13 @@
 import { useLocalSearchParams } from 'expo-router';
-import { useState } from 'react';
-import { Alert, Pressable, StyleSheet, Text, View } from 'react-native';
-import {
-  FiDownload,
-  FiEye,
-  FiFileText,
-  FiPrinter,
-  FiSave,
-} from 'react-icons/fi';
+import { type Dispatch, type SetStateAction, useEffect, useState } from 'react';
+import { Alert, Linking, Pressable, StyleSheet, Text, View } from 'react-native';
+import { FiDownload, FiEye, FiFileText, FiPrinter, FiSave } from 'react-icons/fi';
 
 import {
   AppHeader,
   EmptyState,
   InfoBox,
+  LoadingState,
   PrimaryButton,
   ReactIcon,
   Screen,
@@ -25,20 +20,88 @@ import {
 import { serviceIcons, statusOptions } from '@/constants/services';
 import { colors, radius, spacing, typography } from '@/constants/theme';
 import { useApp } from '@/context/AppContext';
-import { generateMockPDF } from '@/services/pdfService';
-import type { CitizenRequest, RequestStatus } from '@/types';
+import type { CitizenRequest, GeneratedDocument, RequestStatus, UploadedFile } from '@/types';
 import { formatDateTime, humanizeKey, serviceLabel } from '@/utils/format';
 
-function useRequestFromParams() {
+function useRequestDetail() {
   const params = useLocalSearchParams<{ id?: string }>();
-  const { requests } = useApp();
-  const id = Array.isArray(params.id) ? params.id[0] : params.id;
-  return requests.find((request) => request.id === id);
+  const { requests, getRequestById } = useApp();
+  const requestId = Array.isArray(params.id) ? params.id[0] : params.id;
+  const [request, setRequest] = useState<CitizenRequest | null>(
+    requestId ? requests.find((item) => item.id === requestId) ?? null : null,
+  );
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    let active = true;
+
+    async function load() {
+      if (!requestId) {
+        if (active) {
+          setRequest(null);
+          setLoading(false);
+        }
+        return;
+      }
+
+      try {
+        const detail = await getRequestById(requestId);
+        if (active) {
+          setRequest(detail);
+        }
+      } catch {
+        if (active) {
+          setRequest(null);
+        }
+      } finally {
+        if (active) {
+          setLoading(false);
+        }
+      }
+    }
+
+    void load();
+
+    return () => {
+      active = false;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [requestId]);
+
+  return {
+    requestId: requestId ?? '',
+    request,
+    setRequest,
+    loading,
+  };
+}
+
+async function openRemoteFile(url?: string) {
+  if (!url) {
+    Alert.alert('File belum tersedia', 'Tautan dokumen belum tersedia.');
+    return;
+  }
+
+  const supported = await Linking.canOpenURL(url);
+  if (!supported) {
+    Alert.alert('Tautan tidak valid', 'Dokumen tidak dapat dibuka dari perangkat ini.');
+    return;
+  }
+
+  await Linking.openURL(url);
+}
+
+function latestDocument(request: CitizenRequest) {
+  return request.generatedDocuments[0];
 }
 
 export function StatusDetailScreen() {
   const { currentUser } = useApp();
-  const request = useRequestFromParams();
+  const { request, loading } = useRequestDetail();
+
+  if (loading) {
+    return <LoadingState />;
+  }
 
   if (!request || (currentUser?.role === 'warga' && request.userId !== currentUser.id)) {
     return (
@@ -47,43 +110,42 @@ export function StatusDetailScreen() {
       </Screen>
     );
   }
-  const activeRequest = request;
 
   async function handleDownload() {
-    try {
-      const uri = await generateMockPDF(activeRequest);
-      Alert.alert('Download PDF', `Dokumen mock berhasil dibuat: ${uri}`);
-    } catch {
-      Alert.alert('Gagal menyimpan data. Silakan coba lagi.');
-    }
+    await openRemoteFile(latestDocument(request)?.downloadUrl || latestDocument(request)?.publicUrl);
   }
 
   return (
     <Screen>
-      <AppHeader title="Detail Pengajuan" subtitle={activeRequest.trackingNumber} showBack />
-      <RequestSummary request={activeRequest} />
+      <AppHeader title="Detail Pengajuan" subtitle={request.trackingNumber} showBack />
+      <RequestSummary request={request} />
 
       <SectionTitle title="Timeline Status" />
-      <Timeline request={activeRequest} />
+      <Timeline request={request} />
 
-      {activeRequest.adminNote ? (
+      {request.adminNote ? (
         <>
           <SectionTitle title="Catatan Admin" />
-          <InfoBox>{activeRequest.adminNote}</InfoBox>
+          <InfoBox>{request.adminNote}</InfoBox>
         </>
       ) : null}
 
       <SectionTitle title="Data Pengajuan" />
-      <DataCard data={activeRequest.formData} />
+      <DataCard data={request.formData} />
 
       <SectionTitle title="Berkas Diunggah" />
-      <DocumentList request={activeRequest} />
+      <DocumentList files={request.uploadedFiles} />
 
-      {activeRequest.serviceType === 'ktp' && activeRequest.status === 'selesai' ? (
-        <PrimaryButton title="Download PDF KTP" icon={FiDownload} onPress={handleDownload} />
+      {request.serviceType === 'ktp' && request.status === 'selesai' ? (
+        <PrimaryButton
+          title="Download PDF KTP"
+          icon={FiDownload}
+          onPress={handleDownload}
+          disabled={!latestDocument(request)}
+        />
       ) : null}
 
-      {activeRequest.serviceType !== 'ktp' && activeRequest.status === 'selesai' ? (
+      {request.serviceType !== 'ktp' && request.status === 'selesai' ? (
         <InfoBox>Surat selesai diproses. Silakan ambil sesuai arahan admin atau unduh jika tersedia.</InfoBox>
       ) : null}
     </Screen>
@@ -91,12 +153,12 @@ export function StatusDetailScreen() {
 }
 
 export function AdminRequestDetailScreen() {
-  const { updateRequestStatus } = useApp();
-  const request = useRequestFromParams();
-  const [status, setStatus] = useState<RequestStatus>(request?.status ?? 'pending');
-  const [adminNote, setAdminNote] = useState(request?.adminNote ?? '');
-  const [noteError, setNoteError] = useState('');
-  const [saving, setSaving] = useState(false);
+  const { updateRequestStatus, generateDocument } = useApp();
+  const { request, setRequest, loading } = useRequestDetail();
+
+  if (loading) {
+    return <LoadingState />;
+  }
 
   if (!request) {
     return (
@@ -105,7 +167,34 @@ export function AdminRequestDetailScreen() {
       </Screen>
     );
   }
-  const activeRequest = request;
+
+  return (
+    <AdminRequestDetailContent
+      key={`${request.id}-${request.updatedAt}`}
+      request={request}
+      setRequest={setRequest}
+      updateRequestStatus={updateRequestStatus}
+      generateDocument={generateDocument}
+    />
+  );
+}
+
+function AdminRequestDetailContent({
+  request,
+  setRequest,
+  updateRequestStatus,
+  generateDocument,
+}: {
+  request: CitizenRequest;
+  setRequest: Dispatch<SetStateAction<CitizenRequest | null>>;
+  updateRequestStatus: (requestId: string, status: RequestStatus, adminNote?: string) => Promise<CitizenRequest>;
+  generateDocument: (requestId: string) => Promise<GeneratedDocument>;
+}) {
+  const [status, setStatus] = useState<RequestStatus>(request.status);
+  const [adminNote, setAdminNote] = useState(request.adminNote ?? '');
+  const [noteError, setNoteError] = useState('');
+  const [saving, setSaving] = useState(false);
+  const [documentBusy, setDocumentBusy] = useState(false);
 
   async function handleSave() {
     if ((status === 'revisi' || status === 'ditolak') && !adminNote.trim()) {
@@ -116,7 +205,8 @@ export function AdminRequestDetailScreen() {
     setSaving(true);
     setNoteError('');
     try {
-      await updateRequestStatus(activeRequest.id, status, adminNote);
+      const updated = await updateRequestStatus(request.id, status, adminNote);
+      setRequest(updated);
       Alert.alert('Status berhasil diperbarui.');
     } catch (caught) {
       Alert.alert(caught instanceof Error ? caught.message : 'Gagal menyimpan data. Silakan coba lagi.');
@@ -125,29 +215,49 @@ export function AdminRequestDetailScreen() {
     }
   }
 
+  async function ensureDocument() {
+    if (latestDocument(request)) {
+      return latestDocument(request);
+    }
+    const document = await generateDocument(request.id);
+    setRequest((previous) =>
+      previous
+        ? {
+            ...previous,
+            generatedDocuments: [document, ...previous.generatedDocuments],
+          }
+        : previous,
+    );
+    return document;
+  }
+
   async function handleGeneratePDF() {
-    if (activeRequest.status !== 'selesai' && status !== 'selesai') {
+    if (request.status !== 'selesai' && status !== 'selesai') {
       Alert.alert('Dokumen belum siap', 'PDF hanya dapat dibuat untuk status Selesai.');
       return;
     }
+
+    setDocumentBusy(true);
     try {
-      const uri = await generateMockPDF({ ...activeRequest, status, adminNote });
-      Alert.alert('Download PDF', `Dokumen mock berhasil dibuat: ${uri}`);
-    } catch {
-      Alert.alert('Gagal menyimpan data. Silakan coba lagi.');
+      const document = await ensureDocument();
+      await openRemoteFile(document.downloadUrl || document.publicUrl);
+    } catch (caught) {
+      Alert.alert(caught instanceof Error ? caught.message : 'Gagal menyimpan data. Silakan coba lagi.');
+    } finally {
+      setDocumentBusy(false);
     }
   }
 
   return (
     <Screen>
-      <AppHeader title="Review Permohonan" subtitle={activeRequest.trackingNumber} showBack />
-      <RequestSummary request={activeRequest} />
+      <AppHeader title="Review Permohonan" subtitle={request.trackingNumber} showBack />
+      <RequestSummary request={request} />
 
       <SectionTitle title="Data Warga" />
-      <DataCard data={activeRequest.formData} />
+      <DataCard data={request.formData} />
 
       <SectionTitle title="Berkas Diunggah" />
-      <DocumentList request={activeRequest} adminMode />
+      <DocumentList files={request.uploadedFiles} adminMode />
 
       <SectionTitle title="Update Status" subtitle="Catatan wajib diisi jika status Revisi atau Ditolak." />
       <View style={styles.reviewCard}>
@@ -173,8 +283,8 @@ export function AdminRequestDetailScreen() {
 
       <SectionTitle title="Cetak Dokumen" />
       <View style={styles.printActions}>
-        <SecondaryButton title="Generate PDF" icon={FiPrinter} onPress={handleGeneratePDF} style={styles.printButton} />
-        <PrimaryButton title="Download" icon={FiDownload} onPress={handleGeneratePDF} style={styles.printButton} />
+        <SecondaryButton title="Generate PDF" icon={FiPrinter} onPress={handleGeneratePDF} loading={documentBusy} style={styles.printButton} />
+        <PrimaryButton title="Download" icon={FiDownload} onPress={handleGeneratePDF} loading={documentBusy} style={styles.printButton} />
       </View>
     </Screen>
   );
@@ -232,10 +342,10 @@ function DataCard({ data }: { data: Record<string, string> }) {
   );
 }
 
-function DocumentList({ request, adminMode }: { request: CitizenRequest; adminMode?: boolean }) {
+function DocumentList({ files, adminMode }: { files: UploadedFile[]; adminMode?: boolean }) {
   return (
     <View style={styles.documentList}>
-      {request.uploadedFiles.map((file) => (
+      {files.map((file) => (
         <View key={file.id} style={styles.documentRow}>
           <View style={styles.documentIcon}>
             <ReactIcon icon={FiFileText} color={colors.secondary} size={19} />
@@ -246,10 +356,10 @@ function DocumentList({ request, adminMode }: { request: CitizenRequest; adminMo
           </View>
           {adminMode ? (
             <View style={styles.documentActions}>
-              <Pressable onPress={() => Alert.alert('Preview', 'Preview dokumen akan tersedia setelah backend file aktif.')} style={styles.documentAction}>
+              <Pressable onPress={() => void openRemoteFile(file.publicUrl || file.uri)} style={styles.documentAction}>
                 <ReactIcon icon={FiEye} color={colors.primary} size={18} />
               </Pressable>
-              <Pressable onPress={() => Alert.alert('Download', 'Download dokumen akan tersedia setelah backend file aktif.')} style={styles.documentAction}>
+              <Pressable onPress={() => void openRemoteFile(file.downloadUrl || file.publicUrl || file.uri)} style={styles.documentAction}>
                 <ReactIcon icon={FiDownload} color={colors.primary} size={18} />
               </Pressable>
             </View>

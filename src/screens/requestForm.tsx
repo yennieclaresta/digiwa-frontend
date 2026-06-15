@@ -34,6 +34,40 @@ const phonePattern = /^[0-9+]{9,15}$/;
 const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const datePattern = /^\d{4}-\d{2}-\d{2}$/;
 
+function fileCategoryForUpload(serviceType: ServiceType, fieldKey: string) {
+  const categories: Record<ServiceType, Record<string, string>> = {
+    ktp: {
+      kartuKeluarga: 'kartu_keluarga',
+      suratPengantar: 'surat_pengantar_rt_rw',
+      pasFoto: 'pas_foto',
+      ktpLama: 'ktp_lama',
+      suratKehilangan: 'surat_kehilangan',
+    },
+    akta_kelahiran: {
+      suratLahir: 'surat_keterangan_lahir',
+      kartuKeluarga: 'kartu_keluarga',
+      ktpAyah: 'ktp',
+      ktpIbu: 'ktp',
+      bukuNikah: 'buku_nikah',
+      suratPengantar: 'surat_pengantar_rt_rw',
+    },
+    akta_kematian: {
+      ktpAlmarhum: 'ktp',
+      kartuKeluarga: 'kartu_keluarga',
+      suratKematian: 'surat_keterangan_kematian',
+      ktpPelapor: 'dokumen_pendukung',
+      suratPengantar: 'surat_pengantar_rt_rw',
+    },
+    surat_rt_rw: {
+      ktp: 'ktp',
+      kartuKeluarga: 'kartu_keluarga',
+      dokumenPendukung: 'dokumen_pendukung',
+    },
+  };
+
+  return categories[serviceType][fieldKey] || 'dokumen_pendukung';
+}
+
 export function RequestFormScreen() {
   const router = useRouter();
   const params = useLocalSearchParams<{ service?: string }>();
@@ -284,7 +318,13 @@ export function RequestFormScreen() {
               value={uploadedFiles[upload.key]}
               error={fileErrors[upload.key]}
               onChange={(file) => {
-                setUploadedFiles((previous) => ({ ...previous, [upload.key]: file }));
+                setUploadedFiles((previous) => ({
+                  ...previous,
+                  [upload.key]: {
+                    ...file,
+                    fileCategory: fileCategoryForUpload(activeConfig.type, upload.key),
+                  },
+                }));
                 setFileErrors((previous) => ({ ...previous, [upload.key]: '' }));
               }}
             />
