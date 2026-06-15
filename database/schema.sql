@@ -180,7 +180,7 @@ CREATE TABLE warga_profiles (
 
   user_id UUID NOT NULL UNIQUE REFERENCES users(id) ON DELETE CASCADE,
 
-  nik VARCHAR(16) NOT NULL UNIQUE,
+  nik VARCHAR(16) UNIQUE,
   kk_number VARCHAR(16) NOT NULL,
 
   address TEXT NOT NULL,
@@ -204,7 +204,7 @@ CREATE TABLE warga_profiles (
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
 
-  CONSTRAINT valid_warga_nik CHECK (nik ~ '^[0-9]{16}$'),
+  CONSTRAINT valid_warga_nik CHECK (nik IS NULL OR nik ~ '^[0-9]{16}$'),
   CONSTRAINT valid_warga_kk CHECK (kk_number ~ '^[0-9]{16}$')
 );
 
@@ -302,7 +302,7 @@ CREATE TABLE service_requests (
   status request_status NOT NULL DEFAULT 'pending',
 
   applicant_name VARCHAR(150) NOT NULL,
-  applicant_nik VARCHAR(16) NOT NULL,
+  applicant_nik VARCHAR(16),
 
   submitted_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
@@ -319,7 +319,7 @@ CREATE TABLE service_requests (
 
   is_archived BOOLEAN NOT NULL DEFAULT FALSE,
 
-  CONSTRAINT valid_applicant_nik CHECK (applicant_nik ~ '^[0-9]{16}$')
+  CONSTRAINT valid_applicant_nik CHECK (applicant_nik IS NULL OR applicant_nik ~ '^[0-9]{16}$')
 );
 
 -- ============================================================
@@ -332,7 +332,7 @@ CREATE TABLE ktp_request_details (
   request_id UUID NOT NULL UNIQUE REFERENCES service_requests(id) ON DELETE CASCADE,
 
   full_name VARCHAR(150) NOT NULL,
-  nik VARCHAR(16) NOT NULL,
+  nik VARCHAR(16),
   kk_number VARCHAR(16) NOT NULL,
 
   birth_place VARCHAR(100),
@@ -359,7 +359,7 @@ CREATE TABLE ktp_request_details (
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
 
-  CONSTRAINT valid_ktp_nik CHECK (nik ~ '^[0-9]{16}$'),
+  CONSTRAINT valid_ktp_nik CHECK (nik IS NULL OR nik ~ '^[0-9]{16}$'),
   CONSTRAINT valid_ktp_kk CHECK (kk_number ~ '^[0-9]{16}$')
 );
 
@@ -1135,44 +1135,6 @@ VALUES
 ('surat_rt_rw', 'ktp', 'KTP Pemohon', 'Upload KTP pemohon.', TRUE, 1),
 ('surat_rt_rw', 'kartu_keluarga', 'Kartu Keluarga', 'Upload Kartu Keluarga.', TRUE, 2),
 ('surat_rt_rw', 'dokumen_pendukung', 'Dokumen Pendukung', 'Upload dokumen pendukung jika diperlukan.', FALSE, 3);
-
--- ============================================================
--- OPTIONAL SAMPLE ADMIN USER
--- Password should be hashed properly in real backend.
--- This is only a placeholder for development.
--- ============================================================
-
-INSERT INTO users (
-  id,
-  role,
-  account_status,
-  full_name,
-  email,
-  phone_number,
-  password_hash
-)
-VALUES (
-  '00000000-0000-0000-0000-000000000001',
-  'super_admin',
-  'active',
-  'Admin DIGIWA',
-  'admin@digiwa.id',
-  '080000000000',
-  'CHANGE_THIS_TO_HASHED_PASSWORD'
-);
-
-INSERT INTO admin_profiles (
-  user_id,
-  admin_code,
-  position,
-  permissions
-)
-VALUES (
-  '00000000-0000-0000-0000-000000000001',
-  'ADM-001',
-  'Super Admin',
-  '{"can_manage_all_requests": true, "can_manage_users": true, "can_generate_documents": true}'::JSONB
-);
 
 -- ============================================================
 -- OPTIONAL HELPFUL VIEWS
