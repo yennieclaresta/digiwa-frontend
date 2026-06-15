@@ -56,7 +56,7 @@ export function AdminDashboardScreen() {
         <View style={styles.adminHeroIcon}>
           <ReactIcon icon={FiShield} color={colors.textInverse} size={28} />
         </View>
-        <Text style={styles.adminHeroTitle}>Halo, Admin</Text>
+        <Text style={styles.adminHeroTitle}>Halo, Petugas</Text>
         <Text style={styles.adminHeroSubtitle}>Kelola verifikasi, status, notifikasi, dan dokumen warga.</Text>
       </View>
 
@@ -254,13 +254,13 @@ export function AdminProfileScreen() {
 
   return (
     <Screen>
-      <AppHeader title="Profil Admin" subtitle="Akun pengelola layanan administrasi warga." />
+      <AppHeader title="Profil Petugas" subtitle="Akun pengelola layanan administrasi warga." />
       <View style={styles.profileCard}>
         <View style={styles.profileAvatar}>
           <ReactIcon icon={FiUser} color={colors.textInverse} size={30} />
         </View>
         <Text style={styles.profileName}>{currentUser?.name}</Text>
-        <Text style={styles.profileMeta}>Role: Admin</Text>
+        <Text style={styles.profileMeta}>Role: Petugas</Text>
         <Text style={styles.profileMeta}>{currentUser?.email}</Text>
       </View>
       <PrimaryButton title="Keluar" icon={FiLogOut} onPress={handleLogout} />

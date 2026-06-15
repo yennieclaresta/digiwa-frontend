@@ -165,7 +165,7 @@ export function NotificationScreen() {
 
   return (
     <Screen>
-      <AppHeader title="Notifikasi" subtitle="Perubahan status dan catatan admin akan muncul di sini." />
+      <AppHeader title="Notifikasi" subtitle="Perubahan status dan catatan petugas akan muncul di sini." />
       {userNotifications.length ? (
         userNotifications.map((notification) => (
           <Pressable
@@ -220,7 +220,7 @@ export function WargaProfileScreen() {
       <View style={styles.quickActions}>
         <SecondaryButton title="Edit Profil" icon={FiEdit3} onPress={() => router.push('/profile/edit')} />
         <SecondaryButton title="Ubah Password" icon={FiCheckCircle} onPress={() => router.push('/profile/password')} />
-        <SecondaryButton title="Bantuan" icon={FiHelpCircle} onPress={() => Alert.alert('Bantuan', 'Hubungi admin kelurahan untuk bantuan penggunaan DIGIWA.')} />
+        <SecondaryButton title="Bantuan" icon={FiHelpCircle} onPress={() => Alert.alert('Bantuan', 'Hubungi petugas kelurahan untuk bantuan penggunaan DIGIWA.')} />
         <PrimaryButton title="Keluar" icon={FiLogOut} onPress={handleLogout} />
       </View>
     </Screen>

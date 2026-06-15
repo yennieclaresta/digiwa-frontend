@@ -125,7 +125,7 @@ export function StatusDetailScreen() {
 
       {request.adminNote ? (
         <>
-          <SectionTitle title="Catatan Admin" />
+          <SectionTitle title="Catatan Petugas" />
           <InfoBox>{request.adminNote}</InfoBox>
         </>
       ) : null}
@@ -146,7 +146,7 @@ export function StatusDetailScreen() {
       ) : null}
 
       {request.serviceType !== 'ktp' && request.status === 'selesai' ? (
-        <InfoBox>Surat selesai diproses. Silakan ambil sesuai arahan admin atau unduh jika tersedia.</InfoBox>
+        <InfoBox>Surat selesai diproses. Silakan ambil sesuai arahan petugas atau unduh jika tersedia.</InfoBox>
       ) : null}
     </Screen>
   );
@@ -198,7 +198,7 @@ function AdminRequestDetailContent({
 
   async function handleSave() {
     if ((status === 'revisi' || status === 'ditolak') && !adminNote.trim()) {
-      setNoteError('Catatan Admin wajib diisi untuk status Revisi atau Ditolak.');
+      setNoteError('Catatan Petugas wajib diisi untuk status Revisi atau Ditolak.');
       return;
     }
 
@@ -268,7 +268,7 @@ function AdminRequestDetailContent({
           options={statusOptions}
         />
         <TextInputField
-          label="Catatan Admin"
+          label="Catatan Petugas"
           value={adminNote}
           onChangeText={(value) => {
             setAdminNote(value);

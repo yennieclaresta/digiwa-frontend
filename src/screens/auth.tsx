@@ -34,6 +34,8 @@ type RegisterForm = {
   email: string;
   phone: string;
   address: string;
+  rt: string;
+  rw: string;
   password: string;
   confirmPassword: string;
 };
@@ -120,7 +122,7 @@ export function LoginScreen() {
         </View>
       </View>
 
-      <AppHeader title="Masuk" subtitle="Email dengan domain @digiwa.id akan diarahkan sebagai admin." />
+      <AppHeader title="Masuk" subtitle="Akun petugas menggunakan email @digiwa.id. Warga dapat login dengan email atau NIK." />
 
       <View style={styles.formCard}>
         <Controller
@@ -182,6 +184,8 @@ export function RegisterScreen() {
       email: '',
       phone: '',
       address: '',
+      rt: '',
+      rw: '',
       password: '',
       confirmPassword: '',
     },
@@ -202,8 +206,8 @@ export function RegisterScreen() {
         email: values.email,
         phone: values.phone,
         address: values.address,
-        rt: '',
-        rw: '',
+        rt: values.rt,
+        rw: values.rw,
         password: values.password,
       });
       router.replace('/(warga)' as never);
@@ -308,6 +312,28 @@ export function RegisterScreen() {
             <TextInputField label="Alamat" value={value} onChangeText={onChange} multiline error={errors.address?.message} />
           )}
         />
+        <View style={styles.inlineFields}>
+          <View style={styles.inlineField}>
+            <Controller
+              control={control}
+              name="rt"
+              rules={{ required: requiredMessage }}
+              render={({ field: { onChange, value } }) => (
+                <TextInputField label="RT" value={value} onChangeText={onChange} keyboardType="number-pad" error={errors.rt?.message} />
+              )}
+            />
+          </View>
+          <View style={styles.inlineField}>
+            <Controller
+              control={control}
+              name="rw"
+              rules={{ required: requiredMessage }}
+              render={({ field: { onChange, value } }) => (
+                <TextInputField label="RW" value={value} onChangeText={onChange} keyboardType="number-pad" error={errors.rw?.message} />
+              )}
+            />
+          </View>
+        </View>
         <Controller
           control={control}
           name="password"
@@ -392,6 +418,13 @@ const styles = StyleSheet.create({
     borderRadius: radius.lg,
     borderWidth: 1,
     borderColor: colors.border,
+  },
+  inlineFields: {
+    flexDirection: 'row',
+    gap: spacing.md,
+  },
+  inlineField: {
+    flex: 1,
   },
   error: {
     color: colors.danger,
