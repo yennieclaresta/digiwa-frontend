@@ -16,7 +16,6 @@ import {
   CheckRow,
   PrimaryButton,
   Screen,
-  SelectField,
   TextInputField,
 } from '@/components/digiwa';
 import { colors, radius, spacing, typography } from '@/constants/theme';
@@ -25,7 +24,6 @@ import { useApp } from '@/context/AppContext';
 type LoginForm = {
   identifier: string;
   password: string;
-  role: 'warga' | 'admin' | '';
 };
 
 type RegisterForm = {
@@ -36,8 +34,6 @@ type RegisterForm = {
   email: string;
   phone: string;
   address: string;
-  rt: string;
-  rw: string;
   password: string;
   confirmPassword: string;
 };
@@ -95,7 +91,6 @@ export function LoginScreen() {
     defaultValues: {
       identifier: '',
       password: '',
-      role: 'warga',
     },
   });
 
@@ -106,7 +101,6 @@ export function LoginScreen() {
       const user = await login({
         identifier: values.identifier,
         password: values.password,
-        role: values.role as 'warga' | 'admin',
       });
       router.replace((user.role === 'admin' ? '/(admin)' : '/(warga)') as never);
     } catch (caught) {
@@ -126,7 +120,7 @@ export function LoginScreen() {
         </View>
       </View>
 
-      <AppHeader title="Masuk" subtitle="Gunakan akun warga atau admin untuk melanjutkan." />
+      <AppHeader title="Masuk" subtitle="Email dengan domain @digiwa.id akan diarahkan sebagai admin." />
 
       <View style={styles.formCard}>
         <Controller
@@ -155,23 +149,6 @@ export function LoginScreen() {
               onChangeText={onChange}
               secureTextEntry
               error={errors.password?.message}
-            />
-          )}
-        />
-        <Controller
-          control={control}
-          name="role"
-          rules={{ required: requiredMessage }}
-          render={({ field: { onChange, value } }) => (
-            <SelectField
-              label="Role"
-              value={value}
-              onChange={onChange}
-              options={[
-                { label: 'Warga', value: 'warga' },
-                { label: 'Admin', value: 'admin' },
-              ]}
-              error={errors.role?.message}
             />
           )}
         />
@@ -205,14 +182,14 @@ export function RegisterScreen() {
       email: '',
       phone: '',
       address: '',
-      rt: '',
-      rw: '',
       password: '',
       confirmPassword: '',
     },
   });
   const hasNoNik = useWatch({ control, name: 'hasNoNik' });
+  const nik = useWatch({ control, name: 'nik' });
   const password = useWatch({ control, name: 'password' });
+  const registerDisabled = !hasNoNik && !nikPattern.test(nik ?? '');
 
   async function onSubmit(values: RegisterForm) {
     setError('');
@@ -225,8 +202,8 @@ export function RegisterScreen() {
         email: values.email,
         phone: values.phone,
         address: values.address,
-        rt: values.rt,
-        rw: values.rw,
+        rt: '',
+        rw: '',
         password: values.password,
       });
       router.replace('/(warga)' as never);
@@ -331,28 +308,6 @@ export function RegisterScreen() {
             <TextInputField label="Alamat" value={value} onChangeText={onChange} multiline error={errors.address?.message} />
           )}
         />
-        <View style={styles.inlineFields}>
-          <View style={styles.inlineField}>
-            <Controller
-              control={control}
-              name="rt"
-              rules={{ required: requiredMessage }}
-              render={({ field: { onChange, value } }) => (
-                <TextInputField label="RT" value={value} onChangeText={onChange} keyboardType="number-pad" error={errors.rt?.message} />
-              )}
-            />
-          </View>
-          <View style={styles.inlineField}>
-            <Controller
-              control={control}
-              name="rw"
-              rules={{ required: requiredMessage }}
-              render={({ field: { onChange, value } }) => (
-                <TextInputField label="RW" value={value} onChangeText={onChange} keyboardType="number-pad" error={errors.rw?.message} />
-              )}
-            />
-          </View>
-        </View>
         <Controller
           control={control}
           name="password"
@@ -373,7 +328,7 @@ export function RegisterScreen() {
           )}
         />
         {error ? <Text style={styles.error}>{error}</Text> : null}
-        <PrimaryButton title="Daftar" icon={FiUserPlus} onPress={handleSubmit(onSubmit)} loading={loading} />
+        <PrimaryButton title="Daftar" icon={FiUserPlus} onPress={handleSubmit(onSubmit)} loading={loading} disabled={registerDisabled} />
       </View>
     </Screen>
   );
@@ -449,12 +404,5 @@ const styles = StyleSheet.create({
   authLinkText: {
     color: colors.primary,
     fontWeight: '900',
-  },
-  inlineFields: {
-    flexDirection: 'row',
-    gap: spacing.md,
-  },
-  inlineField: {
-    flex: 1,
   },
 });

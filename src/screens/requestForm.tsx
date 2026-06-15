@@ -88,6 +88,25 @@ export function RequestFormScreen() {
   const totalSteps = sections.length + 1;
   const isConfirmationStep = step === sections.length;
   const currentSection = sections[step];
+  const hasInvalidNikInput = (fields: FormField[] = []) =>
+    fields.some((field) => {
+      if (field.validation !== 'nik') {
+        return false;
+      }
+      const isAccountNikOptionalForKtp =
+        activeConfig.type === 'ktp' &&
+        field.name === 'nik' &&
+        !activeUser.nik;
+      const required = field.required && !isAccountNikOptionalForKtp;
+      const value = (watchedValues?.[field.name] ?? '').trim();
+      if (!required && !value) {
+        return false;
+      }
+      return !nikPattern.test(value);
+    });
+  const nikActionDisabled = isConfirmationStep
+    ? sections.some((section) => hasInvalidNikInput(section.fields))
+    : hasInvalidNikInput(currentSection.fields);
   function isUploadRequired(upload: UploadRequirement) {
     if (upload.required) {
       return true;
@@ -312,9 +331,9 @@ export function RequestFormScreen() {
       <View style={styles.actions}>
         {step > 0 ? <SecondaryButton title="Kembali" icon={FiArrowLeft} onPress={() => setStep((current) => current - 1)} style={styles.actionButton} /> : null}
         {isConfirmationStep ? (
-          <PrimaryButton title="Kirim Pengajuan" icon={FiSend} onPress={openConfirmation} style={styles.actionButton} />
+          <PrimaryButton title="Kirim Pengajuan" icon={FiSend} onPress={openConfirmation} style={styles.actionButton} disabled={nikActionDisabled} />
         ) : (
-          <PrimaryButton title="Lanjut" icon={FiArrowRight} onPress={goNext} style={styles.actionButton} />
+          <PrimaryButton title="Lanjut" icon={FiArrowRight} onPress={goNext} style={styles.actionButton} disabled={nikActionDisabled} />
         )}
       </View>
 

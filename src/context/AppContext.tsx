@@ -15,7 +15,6 @@ import type {
 type LoginInput = {
   identifier: string;
   password: string;
-  role: User['role'];
 };
 
 type RegisterInput = Omit<User, 'id' | 'role'>;
@@ -112,13 +111,15 @@ export function AppProvider({ children }: { children: ReactNode }) {
     restoreSession();
   }, []);
 
-  const login = async ({ identifier, password, role }: LoginInput) => {
-    const normalized = identifier.trim().toLowerCase();
+  const login = async ({ identifier, password }: LoginInput) => {
+    const trimmedIdentifier = identifier.trim();
+    const normalized = trimmedIdentifier.toLowerCase();
+    const role = normalized.includes('@digiwa.id') ? 'admin' : 'warga';
     const user = users.find(
       (candidate) =>
         candidate.role === role &&
         candidate.password === password &&
-        (candidate.email.toLowerCase() === normalized || (candidate.nik && candidate.nik === identifier.trim())),
+        (candidate.email.toLowerCase() === normalized || (candidate.nik && candidate.nik === trimmedIdentifier)),
     );
 
     if (!user) {

@@ -88,7 +88,7 @@ export const mockUsers: User[] = [
     name: 'Admin Kelurahan',
     nik: '0000000000000000',
     kkNumber: '0000000000000000',
-    email: 'admin@digiwa.test',
+    email: 'admin@digiwa.id',
     phone: '081111111111',
     address: 'Kantor Kelurahan Sukamaju',
     rt: '00',

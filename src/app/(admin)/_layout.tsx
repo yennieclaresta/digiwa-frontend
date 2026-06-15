@@ -4,14 +4,14 @@ import { FiArchive, FiCheckSquare, FiGrid, FiPrinter, FiUser } from 'react-icons
 
 import { ReactIcon } from '@/components/digiwa';
 import { RoleGuard } from '@/components/RoleGuard';
-import { colors } from '@/constants/theme';
+import { colors, radius, spacing } from '@/constants/theme';
 
 export default function AdminTabsLayout() {
   return (
     <RoleGuard role="admin">
-<Tabs
+      <Tabs
         screenOptions={{
-          headerShown: true,
+          headerShown: false,
           sceneStyle: {
             backgroundColor: colors.primaryLight,
           },
@@ -21,20 +21,28 @@ export default function AdminTabsLayout() {
             <PlatformPressable
               {...props}
               pressOpacity={1}
+              pressColor="transparent"
               android_ripple={{
-                color: colors.neutral,
-                borderless: true,
                 ...(android_ripple ?? {}),
+                color: 'transparent',
+                borderless: false,
+                radius: 0,
               }}
             >
               {children}
             </PlatformPressable>
           ),
-          tabBarLabelStyle: { fontWeight: '800', fontSize: 10 },
+          tabBarLabelStyle: { fontWeight: '800', fontSize: 11 },
           tabBarStyle: {
             backgroundColor: colors.primaryLight,
+            borderTopWidth: 0,
             elevation: 0,
-            minHeight: 60,
+            shadowColor: 'transparent',
+            shadowOpacity: 0,
+            minHeight: 70,
+            paddingTop: spacing.xs,
+            borderTopLeftRadius: radius.lg,
+            borderTopRightRadius: radius.lg,
           },
         }}
       >
