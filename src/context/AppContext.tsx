@@ -1,10 +1,34 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { createContext, ReactNode, useContext, useEffect, useState } from 'react';
 
-import { mockActivities, mockNotifications, mockRequests, mockUsers } from '@/data/mockData';
+import {
+  createRequest as createRequestRequest,
+  generateDocument as generateDocumentRequest,
+  getAdminDashboard,
+  getMe,
+  getRequest,
+  listNotifications,
+  listRequests,
+  login as loginRequest,
+  markNotificationRead as markNotificationReadRequest,
+  register as registerRequest,
+  updateMe,
+  updateRequestStatus as updateRequestStatusRequest,
+  updateMyPassword,
+} from '@/services/api';
+import {
+  mapAdminActivity,
+  mapGeneratedDocument,
+  mapNotification,
+  mapRequestDetail,
+  mapRequestSummary,
+  mapUser,
+} from '@/services/apiMappers';
+import { uploadFilesToCloudinary } from '@/services/uploadService';
 import type {
   AdminActivity,
   CitizenRequest,
+  GeneratedDocument,
   Notification,
   RequestStatus,
   ServiceType,
@@ -17,18 +41,37 @@ type LoginInput = {
   password: string;
 };
 
-type RegisterInput = Omit<User, 'id' | 'role'>;
+type RegisterInput = {
+  name: string;
+  nik: string;
+  kkNumber: string;
+  email: string;
+  phone: string;
+  address: string;
+  rt: string;
+  rw: string;
+  password: string;
+};
+
+type ProfileInput = Pick<User, 'name' | 'email' | 'phone' | 'address' | 'rt' | 'rw'>;
+
+type PasswordInput = {
+  currentPassword: string;
+  newPassword: string;
+};
 
 type AppContextValue = {
-  users: User[];
   requests: CitizenRequest[];
   notifications: Notification[];
   activities: AdminActivity[];
   currentUser: User | null;
   sessionLoading: boolean;
+  dataLoading: boolean;
   login: (input: LoginInput) => Promise<User>;
   register: (input: RegisterInput) => Promise<User>;
   logout: () => Promise<void>;
+  refreshData: () => Promise<void>;
+  getRequestById: (requestId: string) => Promise<CitizenRequest>;
   submitRequest: (
     serviceType: ServiceType,
     formData: Record<string, string>,
@@ -36,253 +79,227 @@ type AppContextValue = {
   ) => Promise<CitizenRequest>;
   updateRequestStatus: (requestId: string, status: RequestStatus, adminNote?: string) => Promise<CitizenRequest>;
   markNotificationRead: (notificationId: string) => Promise<void>;
+  generateDocument: (requestId: string) => Promise<GeneratedDocument>;
+  updateProfile: (input: ProfileInput) => Promise<User>;
+  changePassword: (input: PasswordInput) => Promise<void>;
 };
 
-const SESSION_KEY = 'DIGIWA_SESSION_USER_ID';
+const SESSION_KEY = 'DIGIWA_SESSION_TOKEN';
 
 const AppContext = createContext<AppContextValue | undefined>(undefined);
 
-function wait<T>(value: T, ms = 220) {
-  return new Promise<T>((resolve) => {
-    setTimeout(() => resolve(value), ms);
-  });
+function upsertRequest(previous: CitizenRequest[], request: CitizenRequest) {
+  return [request, ...previous.filter((item) => item.id !== request.id)];
 }
 
-function createId(prefix: string) {
-  return `${prefix}-${Date.now()}-${Math.random().toString(16).slice(2, 8)}`;
-}
-
-function createTrackingNumber(serviceType: ServiceType) {
-  const serviceCode = {
-    ktp: 'KTP',
-    akta_kelahiran: 'AKL',
-    akta_kematian: 'AKM',
-    surat_rt_rw: 'SRT',
-  }[serviceType];
-  const now = new Date();
-  const stamp = now.toISOString().slice(0, 10).replace(/-/g, '');
-  const suffix = Math.floor(100 + Math.random() * 900);
-  return `DGW-${serviceCode}-${stamp}-${suffix}`;
-}
-
-function notificationMessage(status: RequestStatus) {
-  const messages: Record<RequestStatus, string> = {
-    pending: 'Pengajuan Anda telah diterima dan sedang menunggu verifikasi admin.',
-    diproses: 'Pengajuan Anda sedang diproses oleh admin.',
-    revisi: 'Pengajuan Anda membutuhkan revisi. Silakan cek catatan admin pada detail pengajuan.',
-    selesai: 'Pengajuan Anda telah selesai diproses.',
-    ditolak: 'Pengajuan Anda ditolak. Silakan cek alasan penolakan pada detail pengajuan.',
-  };
-  return messages[status];
-}
-
-function timelineTitle(status: RequestStatus) {
-  const titles: Record<RequestStatus, string> = {
-    pending: 'Menunggu Verifikasi',
-    diproses: 'Diproses Admin',
-    revisi: 'Perlu Revisi',
-    selesai: 'Selesai Diproses',
-    ditolak: 'Ditolak',
-  };
-  return titles[status];
+function mergeRequest(previous: CitizenRequest[], request: CitizenRequest) {
+  const existing = previous.find((item) => item.id === request.id);
+  if (!existing) {
+    return upsertRequest(previous, request);
+  }
+  return previous.map((item) => (item.id === request.id ? request : item));
 }
 
 export function AppProvider({ children }: { children: ReactNode }) {
-  const [users, setUsers] = useState<User[]>(mockUsers);
-  const [requests, setRequests] = useState<CitizenRequest[]>(mockRequests);
-  const [notifications, setNotifications] = useState<Notification[]>(mockNotifications);
-  const [activities, setActivities] = useState<AdminActivity[]>(mockActivities);
+  const [token, setToken] = useState('');
+  const [requests, setRequests] = useState<CitizenRequest[]>([]);
+  const [notifications, setNotifications] = useState<Notification[]>([]);
+  const [activities, setActivities] = useState<AdminActivity[]>([]);
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [sessionLoading, setSessionLoading] = useState(true);
+  const [dataLoading, setDataLoading] = useState(false);
+
+  async function loadAppData(authToken: string, user: User) {
+    setDataLoading(true);
+    try {
+      const requestPromise = listRequests(authToken);
+      const notificationPromise = listNotifications(authToken);
+      const dashboardPromise = user.role === 'admin' ? getAdminDashboard(authToken) : null;
+      const [requestResponse, notificationResponse, dashboardResponse] = await Promise.all([
+        requestPromise,
+        notificationPromise,
+        dashboardPromise,
+      ]);
+      const detailedRequests = await Promise.all(
+        requestResponse.requests.map(async (rawRequest) => {
+          const summary = mapRequestSummary(rawRequest);
+          try {
+            const detailResponse = await getRequest(authToken, summary.id);
+            return mapRequestDetail(detailResponse.request);
+          } catch {
+            return summary;
+          }
+        }),
+      );
+
+      setRequests(detailedRequests);
+      setNotifications(notificationResponse.notifications.map(mapNotification));
+      setActivities(
+        user.role === 'admin' && dashboardResponse
+          ? dashboardResponse.recentActivity.map(mapAdminActivity)
+          : [],
+      );
+    } finally {
+      setDataLoading(false);
+    }
+  }
 
   useEffect(() => {
+    let active = true;
+
     async function restoreSession() {
       try {
-        const userId = await AsyncStorage.getItem(SESSION_KEY);
-        if (userId) {
-          const foundUser = mockUsers.find((user) => user.id === userId) ?? null;
-          setCurrentUser(foundUser);
+        const storedToken = await AsyncStorage.getItem(SESSION_KEY);
+        if (!storedToken) {
+          return;
         }
+
+        const response = await getMe(storedToken);
+        const user = mapUser(response.user);
+        if (!active) {
+          return;
+        }
+
+        setToken(storedToken);
+        setCurrentUser(user);
+        await loadAppData(storedToken, user);
+      } catch {
+        await AsyncStorage.removeItem(SESSION_KEY);
       } finally {
-        setSessionLoading(false);
+        if (active) {
+          setSessionLoading(false);
+        }
       }
     }
 
     restoreSession();
+
+    return () => {
+      active = false;
+    };
   }, []);
 
-  const login = async ({ identifier, password }: LoginInput) => {
-    const trimmedIdentifier = identifier.trim();
-    const normalized = trimmedIdentifier.toLowerCase();
-    const role = normalized.includes('@digiwa.id') ? 'admin' : 'warga';
-    const user = users.find(
-      (candidate) =>
-        candidate.role === role &&
-        candidate.password === password &&
-        (candidate.email.toLowerCase() === normalized || (candidate.nik && candidate.nik === trimmedIdentifier)),
-    );
-
-    if (!user) {
-      throw new Error('Email/NIK atau password tidak sesuai.');
-    }
-
+  async function persistSession(nextToken: string, user: User) {
+    setToken(nextToken);
     setCurrentUser(user);
-    await AsyncStorage.setItem(SESSION_KEY, user.id);
-    return wait(user);
+    await AsyncStorage.setItem(SESSION_KEY, nextToken);
+    await loadAppData(nextToken, user);
+  }
+
+  const login = async ({ identifier, password }: LoginInput) => {
+    const response = await loginRequest(identifier.trim(), password);
+    const user = mapUser(response.user);
+    await persistSession(response.token, user);
+    return user;
   };
 
   const register = async (input: RegisterInput) => {
-    const duplicate = users.some(
-      (user) =>
-        user.email.toLowerCase() === input.email.toLowerCase() ||
-        (Boolean(input.nik) && user.nik === input.nik),
-    );
-    if (duplicate) {
-      throw new Error(input.nik ? 'Email atau NIK sudah terdaftar.' : 'Email sudah terdaftar.');
-    }
-
-    const user: User = {
-      ...input,
-      id: createId('user-warga'),
-      role: 'warga',
-    };
-
-    setUsers((previous) => [user, ...previous]);
-    setCurrentUser(user);
-    await AsyncStorage.setItem(SESSION_KEY, user.id);
-    return wait(user);
+    const response = await registerRequest({
+      name: input.name,
+      nik: input.nik,
+      kkNumber: input.kkNumber,
+      email: input.email,
+      phone: input.phone,
+      address: input.address,
+      rt: input.rt,
+      rw: input.rw,
+      password: input.password,
+    });
+    const user = mapUser(response.user);
+    await persistSession(response.token, user);
+    return user;
   };
 
   const logout = async () => {
+    setToken('');
     setCurrentUser(null);
+    setRequests([]);
+    setNotifications([]);
+    setActivities([]);
     await AsyncStorage.removeItem(SESSION_KEY);
   };
 
+  const refreshData = async () => {
+    if (!token || !currentUser) {
+      return;
+    }
+    await loadAppData(token, currentUser);
+  };
+
+  const getRequestById = async (requestId: string) => {
+    if (!token) {
+      throw new Error('Unauthorized.');
+    }
+
+    const cachedRequest = requests.find((item) => item.id === requestId);
+    if (
+      cachedRequest &&
+      (Object.keys(cachedRequest.formData).length > 0 ||
+        cachedRequest.timeline.length > 0 ||
+        cachedRequest.uploadedFiles.length > 0 ||
+        cachedRequest.generatedDocuments.length > 0)
+    ) {
+      return cachedRequest;
+    }
+
+    const response = await getRequest(token, requestId);
+    const request = mapRequestDetail(response.request);
+    setRequests((previous) => mergeRequest(previous, request));
+    return request;
+  };
+
   const submitRequest: AppContextValue['submitRequest'] = async (serviceType, formData, uploadedFiles) => {
-    if (!currentUser || currentUser.role !== 'warga') {
+    if (!token || !currentUser || currentUser.role !== 'warga') {
       throw new Error('Akses tidak diizinkan.');
     }
 
-    const now = new Date().toISOString();
-    const request: CitizenRequest = {
-      id: createId('req'),
-      trackingNumber: createTrackingNumber(serviceType),
-      userId: currentUser.id,
-      applicantName:
-        formData.namaLengkap ??
-        formData.namaPelapor ??
-        formData.namaAyah ??
-        formData.namaAnak ??
-        formData.namaAlmarhum ??
-        currentUser.name,
-      nik:
-        formData.nik ||
-        formData.nikPelapor ||
-        formData.nikAyah ||
-        formData.nikAlmarhum ||
-        currentUser.nik ||
-        'Belum memiliki NIK',
+    const cloudinaryFiles = uploadedFiles.length
+      ? await uploadFilesToCloudinary(token, serviceType, uploadedFiles)
+      : [];
+    const response = await createRequestRequest(token, {
       serviceType,
-      status: 'pending',
-      submittedAt: now,
-      updatedAt: now,
       formData,
-      uploadedFiles,
-      timeline: [
-        {
-          id: createId('timeline'),
-          status: 'pending',
-          title: 'Pengajuan Dikirim',
-          description: 'Pengajuan berhasil dikirim.',
-          createdAt: now,
-        },
-        {
-          id: createId('timeline'),
-          status: 'pending',
-          title: 'Menunggu Verifikasi',
-          description: 'Pengajuan menunggu verifikasi admin.',
-          createdAt: now,
-        },
-      ],
-    };
+      statementAccepted: true,
+      uploadedFiles: cloudinaryFiles.map((file) => ({
+        name: file.name,
+        type: file.type,
+        size: file.size,
+        publicUrl: file.publicUrl,
+        storagePath: file.storagePath,
+        fileCategory: file.fileCategory,
+        uploadedAt: file.uploadedAt,
+      })),
+    });
+    const request = mapRequestDetail(response.request);
+    setRequests((previous) => upsertRequest(previous, request));
 
-    const notification: Notification = {
-      id: createId('notif'),
-      userId: currentUser.id,
-      requestId: request.id,
-      title: 'Pengajuan berhasil dikirim',
-      message: notificationMessage('pending'),
-      isRead: false,
-      createdAt: now,
-    };
+    const notificationResponse = await listNotifications(token);
+    setNotifications(notificationResponse.notifications.map(mapNotification));
 
-    setRequests((previous) => [request, ...previous]);
-    setNotifications((previous) => [notification, ...previous]);
-    return wait(request);
+    return request;
   };
 
   const updateRequestStatus: AppContextValue['updateRequestStatus'] = async (requestId, status, adminNote) => {
-    if (!currentUser || currentUser.role !== 'admin') {
+    if (!token || !currentUser || currentUser.role !== 'admin') {
       throw new Error('Akses tidak diizinkan.');
     }
 
-    let updatedRequest: CitizenRequest | undefined;
-    const now = new Date().toISOString();
-
-    setRequests((previous) =>
-      previous.map((request) => {
-        if (request.id !== requestId) {
-          return request;
-        }
-
-        updatedRequest = {
-          ...request,
-          status,
-          adminNote: adminNote?.trim() || request.adminNote,
-          updatedAt: now,
-          timeline: [
-            ...request.timeline,
-            {
-              id: createId('timeline'),
-              status,
-              title: timelineTitle(status),
-              description: notificationMessage(status),
-              createdAt: now,
-            },
-          ],
-        };
-        return updatedRequest;
-      }),
-    );
-
-    if (!updatedRequest) {
-      throw new Error('Pengajuan tidak ditemukan.');
-    }
-
-    const notification: Notification = {
-      id: createId('notif'),
-      userId: updatedRequest.userId,
-      requestId: updatedRequest.id,
-      title: `Status ${timelineTitle(status)}`,
-      message: notificationMessage(status),
-      isRead: false,
-      createdAt: now,
-    };
-
-    const activity: AdminActivity = {
-      id: createId('activity'),
-      adminId: currentUser.id,
-      action: `Admin updated request status to ${timelineTitle(status)}`,
-      requestId,
-      createdAt: now,
-    };
-
-    setNotifications((previous) => [notification, ...previous]);
-    setActivities((previous) => [activity, ...previous]);
-    return wait(updatedRequest);
+    const response = await updateRequestStatusRequest(token, requestId, {
+      status,
+      adminNote: adminNote?.trim() || '',
+    });
+    const updatedRequest = mapRequestDetail(response.request);
+    setRequests((previous) => mergeRequest(previous, updatedRequest));
+    await loadAppData(token, currentUser);
+    return updatedRequest;
   };
 
   const markNotificationRead = async (notificationId: string) => {
+    if (!token) {
+      throw new Error('Unauthorized.');
+    }
+
+    await markNotificationReadRequest(token, notificationId);
     setNotifications((previous) =>
       previous.map((notification) =>
         notification.id === notificationId
@@ -293,22 +310,57 @@ export function AppProvider({ children }: { children: ReactNode }) {
           : notification,
       ),
     );
-    await wait(undefined);
+  };
+
+  const generateDocument = async (requestId: string) => {
+    if (!token || !currentUser || currentUser.role !== 'admin') {
+      throw new Error('Akses tidak diizinkan.');
+    }
+
+    const response = await generateDocumentRequest(token, requestId);
+    const document = mapGeneratedDocument(response.document);
+    const detailResponse = await getRequest(token, requestId);
+    setRequests((previous) => mergeRequest(previous, mapRequestDetail(detailResponse.request)));
+    return document;
+  };
+
+  const updateProfile = async (input: ProfileInput) => {
+    if (!token || !currentUser) {
+      throw new Error('Unauthorized.');
+    }
+
+    const response = await updateMe(token, input);
+    const user = mapUser(response.user);
+    setCurrentUser(user);
+    return user;
+  };
+
+  const changePassword = async (input: PasswordInput) => {
+    if (!token) {
+      throw new Error('Unauthorized.');
+    }
+
+    await updateMyPassword(token, input);
   };
 
   const value = {
-    users,
     requests,
     notifications,
     activities,
     currentUser,
     sessionLoading,
+    dataLoading,
     login,
     register,
     logout,
+    refreshData,
+    getRequestById,
     submitRequest,
     updateRequestStatus,
     markNotificationRead,
+    generateDocument,
+    updateProfile,
+    changePassword,
   };
 
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>;

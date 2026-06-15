@@ -18,6 +18,8 @@ export default function RootLayout() {
           <Stack.Screen name="form/[service]" />
           <Stack.Screen name="request/[id]" />
           <Stack.Screen name="admin-request/[id]" />
+          <Stack.Screen name="profile/edit" />
+          <Stack.Screen name="profile/password" />
           <Stack.Screen name="(warga)" />
           <Stack.Screen name="(admin)" />
         </Stack>
