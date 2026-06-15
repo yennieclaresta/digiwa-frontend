@@ -2,6 +2,8 @@ import os
 from pathlib import Path
 from typing import Any
 
+from dotenv import load_dotenv
+
 BASE_DIR = Path(__file__).resolve().parent.parent
 ENV_FILE = BASE_DIR / ".env"
 ADMIN_DOMAIN = "@digiwa.id"
@@ -9,18 +11,6 @@ ROLE_ADMIN = {"admin", "super_admin"}
 ROLE_WARGA = "warga"
 SERVICE_TYPES = {"ktp", "akta_kelahiran", "akta_kematian", "surat_rt_rw"}
 STATUS_VALUES = {"pending", "diproses", "revisi", "selesai", "ditolak"}
-
-def load_env_file() -> None:
-    if not ENV_FILE.exists():
-        return
-    for raw_line in ENV_FILE.read_text(encoding="utf-8").splitlines():
-        line = raw_line.strip()
-        if not line or line.startswith("#") or "=" not in line:
-            continue
-        key, value = line.split("=", 1)
-        key = key.strip()
-        value = value.strip().strip('"').strip("'")
-        os.environ.setdefault(key, value)
 
 def env(name: str, default: str = "") -> str:
     return os.getenv(name, default).strip()
@@ -37,7 +27,7 @@ def int_env(name: str, default: int) -> int:
         return default
 
 def build_config(overrides: dict[str, Any] | None = None) -> dict[str, Any]:
-    load_env_file()
+    load_dotenv(ENV_FILE, override=False)
     config = {
         "APP_NAME": "DIGIWA Backend",
         "APP_SECRET": env("APP_SECRET", "dev-secret"),
