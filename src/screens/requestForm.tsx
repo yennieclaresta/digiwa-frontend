@@ -113,6 +113,14 @@ export function RequestFormScreen() {
   } = useForm<FormValues>({ defaultValues });
   const watchedValues = useWatch({ control });
 
+  // Sync NIK from profile whenever it becomes available (e.g., after KTP request is completed)
+  useEffect(() => {
+    if (!currentUser?.nik) return;
+    setValue('nik', currentUser.nik);
+    setValue('nikPelapor', currentUser.nik);
+    setNikDisabledForKtp(false);
+  }, [currentUser?.nik, setValue]);
+
   // Clear alasanKtpBaru when the user switches away from "KTP Baru"
   useEffect(() => {
     if (config?.type !== 'ktp') return;

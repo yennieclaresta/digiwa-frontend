@@ -160,7 +160,17 @@ export function AppHeader({
     <View style={styles.header}>
       <View style={styles.headerLeft}>
         {showBack ? (
-          <Pressable onPress={() => router.back()} style={styles.backButton} hitSlop={10}>
+          <Pressable
+            onPress={() => {
+              if (router.canGoBack()) {
+                router.back();
+              } else {
+                router.replace('/');
+              }
+            }}
+            style={styles.backButton}
+            hitSlop={10}
+          >
             <ReactIcon icon={FiArrowLeft} size={22} color={colors.primary} />
           </Pressable>
         ) : null}

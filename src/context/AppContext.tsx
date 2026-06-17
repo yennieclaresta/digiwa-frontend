@@ -113,14 +113,19 @@ export function AppProvider({ children }: { children: ReactNode }) {
   async function loadAppData(authToken: string, user: User) {
     setDataLoading(true);
     try {
+      const mePromise = getMe(authToken).then((r) => mapUser(r.user)).catch(() => null);
       const requestPromise = listRequests(authToken);
       const notificationPromise = listNotifications(authToken);
       const dashboardPromise = user.role === 'admin' ? getAdminDashboard(authToken) : null;
-      const [requestResponse, notificationResponse, dashboardResponse] = await Promise.all([
+      const [refreshedUser, requestResponse, notificationResponse, dashboardResponse] = await Promise.all([
+        mePromise,
         requestPromise,
         notificationPromise,
         dashboardPromise,
       ]);
+      if (refreshedUser) {
+        setCurrentUser(refreshedUser);
+      }
       const detailedRequests = await Promise.all(
         requestResponse.requests.map(async (rawRequest) => {
           const summary = mapRequestSummary(rawRequest);
