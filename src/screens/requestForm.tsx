@@ -282,7 +282,8 @@ export function RequestFormScreen() {
 
   // --- render ---
 
-  const visibleSectionUploads = currentSection.uploads?.filter(isUploadVisible) ?? [];
+  // currentSection is undefined on the confirmation step — guard with optional chaining
+  const visibleSectionUploads = currentSection?.uploads?.filter(isUploadVisible) ?? [];
 
   return (
     <Screen>

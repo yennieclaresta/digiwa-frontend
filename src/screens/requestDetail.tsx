@@ -342,7 +342,10 @@ function DataCard({ data }: { data: Record<string, string> }) {
   );
 }
 
-function DocumentList({ files, adminMode }: { files: UploadedFile[]; adminMode?: boolean }) {
+function DocumentList({ files, adminMode }: { files?: UploadedFile[]; adminMode?: boolean }) {
+  if (!files?.length) {
+    return <View style={styles.documentList} />;
+  }
   return (
     <View style={styles.documentList}>
       {files.map((file) => (
