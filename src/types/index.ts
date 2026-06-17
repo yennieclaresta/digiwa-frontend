@@ -30,6 +30,8 @@ export type UploadedFile = {
   storagePath?: string;
   fileCategory?: string;
   downloadUrl?: string;
+  /** Web only — raw File object from document picker, not sent to backend */
+  file?: File;
 };
 
 export type TimelineItem = {
@@ -102,16 +104,21 @@ export type FormField = {
   validation?: 'nik' | 'kk' | 'email' | 'phone' | 'date';
   options?: SelectOption[];
   placeholder?: string;
+  /** Field is only shown (and validated) when the referenced field has one of the given values */
+  visibleWhen?: {
+    field: string;
+    values: string[];
+  };
 };
 
 export type UploadRequirement = {
   key: string;
   label: string;
   required?: boolean;
-  requiredWhen?: {
-    field: string;
-    values: string[];
-  };
+  /** OR conditions: upload is required when ANY condition matches */
+  requiredWhen?: Array<{ field: string; values: string[] }>;
+  /** OR conditions: upload is shown only when ANY condition matches; always shown when absent */
+  showWhen?: Array<{ field: string; values: string[] }>;
 };
 
 export type FormSection = {

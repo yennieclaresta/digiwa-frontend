@@ -116,6 +116,17 @@ export const services: ServiceConfig[] = [
             { label: 'KTP Rusak', value: 'KTP Rusak' },
             { label: 'Cetak Ulang', value: 'Cetak Ulang' },
           ] },
+          {
+            name: 'alasanKtpBaru',
+            label: 'Jenis Permohonan KTP Baru',
+            required: true,
+            type: 'select',
+            visibleWhen: { field: 'jenisPengajuan', values: ['KTP Baru'] },
+            options: [
+              { label: 'KTP Pertama (belum pernah punya KTP)', value: 'baru' },
+              { label: 'Kehilangan KTP (ingin membuat baru)', value: 'kehilangan' },
+            ],
+          },
         ],
       },
       {
@@ -125,8 +136,30 @@ export const services: ServiceConfig[] = [
           { key: 'kartuKeluarga', label: 'Kartu Keluarga', required: true },
           { key: 'suratPengantar', label: 'Surat Pengantar RT/RW', required: true },
           { key: 'pasFoto', label: 'Pas Foto', required: true },
-          { key: 'ktpLama', label: 'KTP Lama', requiredWhen: { field: 'jenisPengajuan', values: ['Perubahan Data', 'KTP Rusak'] } },
-          { key: 'suratKehilangan', label: 'Surat Kehilangan', requiredWhen: { field: 'jenisPengajuan', values: ['KTP Hilang'] } },
+          {
+            key: 'ktpLama',
+            label: 'KTP Lama',
+            requiredWhen: [
+              { field: 'jenisPengajuan', values: ['Perubahan Data', 'KTP Rusak'] },
+              { field: 'alasanKtpBaru', values: ['kehilangan'] },
+            ],
+            showWhen: [
+              { field: 'jenisPengajuan', values: ['Perubahan Data', 'KTP Rusak'] },
+              { field: 'alasanKtpBaru', values: ['kehilangan'] },
+            ],
+          },
+          {
+            key: 'suratKehilangan',
+            label: 'Surat Kehilangan dari Kepolisian',
+            requiredWhen: [
+              { field: 'jenisPengajuan', values: ['KTP Hilang'] },
+              { field: 'alasanKtpBaru', values: ['kehilangan'] },
+            ],
+            showWhen: [
+              { field: 'jenisPengajuan', values: ['KTP Hilang'] },
+              { field: 'alasanKtpBaru', values: ['kehilangan'] },
+            ],
+          },
         ],
       },
     ],
@@ -238,7 +271,12 @@ export const services: ServiceConfig[] = [
           { name: 'tempatLahir', label: 'Tempat Lahir', required: true },
           { name: 'tanggalLahir', label: 'Tanggal Lahir', required: true, validation: 'date', type: 'date', placeholder: 'YYYY-MM-DD' },
           { name: 'agama', label: 'Agama', required: true },
-          { name: 'statusPerkawinan', label: 'Status Perkawinan', required: true },
+          { name: 'statusPerkawinan', label: 'Status Perkawinan', required: true, type: 'select', options: [
+            { label: 'Belum Kawin', value: 'Belum Kawin' },
+            { label: 'Kawin', value: 'Kawin' },
+            { label: 'Cerai Hidup', value: 'Cerai Hidup' },
+            { label: 'Cerai Mati', value: 'Cerai Mati' },
+          ] },
           { name: 'pekerjaan', label: 'Pekerjaan', required: true },
           { name: 'alamatTerakhir', label: 'Alamat Terakhir', required: true, type: 'textarea' },
         ],

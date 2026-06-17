@@ -306,6 +306,8 @@ export function FileUploadField({
       type: asset.mimeType ?? 'application/octet-stream',
       size: asset.size ?? 0,
       uploadedAt: new Date().toISOString(),
+      // On Expo Web, asset.file is the native File object needed for proper multipart upload
+      file: (asset as { file?: File }).file,
     });
   }
 
