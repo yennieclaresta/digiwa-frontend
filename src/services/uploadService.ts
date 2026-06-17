@@ -1,3 +1,5 @@
+import { Platform } from 'react-native';
+
 import { requestUploadSignature } from '@/services/api';
 import type { ServiceType, UploadedFile } from '@/types';
 
@@ -16,11 +18,26 @@ export async function uploadFilesToCloudinary(
     formData.append('folder', signature.folder);
     formData.append('timestamp', String(signature.timestamp));
     formData.append('signature', signature.signature);
-    formData.append('file', {
-      uri: file.uri,
-      name: file.name,
-      type: file.type || 'application/octet-stream',
-    } as never);
+
+    if (Platform.OS === 'web') {
+      // On Expo Web the { uri, name, type } RN trick sends a stringified object.
+      // Use the native File object (asset.file) when available, otherwise
+      // retrieve the blob from the blob/data URI returned by the document picker.
+      if (file.file) {
+        formData.append('file', file.file, file.name);
+      } else {
+        const blobRes = await fetch(file.uri);
+        const blob = await blobRes.blob();
+        formData.append('file', blob, file.name);
+      }
+    } else {
+      // React Native: multipart upload via the { uri, name, type } bridge trick
+      formData.append('file', {
+        uri: file.uri,
+        name: file.name,
+        type: file.type || 'application/octet-stream',
+      } as never);
+    }
 
     const response = await fetch(signature.uploadUrl, {
       method: 'POST',
@@ -41,6 +58,7 @@ export async function uploadFilesToCloudinary(
 
     uploaded.push({
       ...file,
+      file: undefined, // strip the File object — not serialisable to JSON
       uri: payload.secure_url,
       name: file.name || payload.original_filename || 'dokumen',
       type:

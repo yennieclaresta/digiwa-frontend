@@ -6,6 +6,17 @@ type RequestOptions = {
 
 const API_BASE_URL = (process.env.EXPO_PUBLIC_API_BASE_URL ?? '').trim().replace(/\/+$/, '');
 
+function toNetworkErrorMessage(error: unknown, url: string) {
+  const fallback = 'Gagal terhubung ke server.';
+  if (!(error instanceof Error)) {
+    return `${fallback} Target: ${url}`;
+  }
+  if (!error.message) {
+    return `${fallback} Target: ${url}`;
+  }
+  return `${fallback} Target: ${url}. Detail: ${error.message}`;
+}
+
 function baseUrl() {
   if (!API_BASE_URL) {
     throw new Error('EXPO_PUBLIC_API_BASE_URL belum diatur.');
@@ -14,15 +25,21 @@ function baseUrl() {
 }
 
 async function apiRequest<T>(path: string, options: RequestOptions = {}) {
-  const response = await fetch(`${baseUrl()}${path}`, {
-    method: options.method ?? 'GET',
-    headers: {
-      Accept: 'application/json',
-      ...(options.body ? { 'Content-Type': 'application/json' } : {}),
-      ...(options.token ? { Authorization: `Bearer ${options.token}` } : {}),
-    },
-    body: options.body ? JSON.stringify(options.body) : undefined,
-  });
+  const url = `${baseUrl()}${path}`;
+  let response: Response;
+  try {
+    response = await fetch(url, {
+      method: options.method ?? 'GET',
+      headers: {
+        Accept: 'application/json',
+        ...(options.body ? { 'Content-Type': 'application/json' } : {}),
+        ...(options.token ? { Authorization: `Bearer ${options.token}` } : {}),
+      },
+      body: options.body ? JSON.stringify(options.body) : undefined,
+    });
+  } catch (error) {
+    throw new Error(toNetworkErrorMessage(error, url));
+  }
 
   const payload = (await response.json().catch(() => ({}))) as { error?: string };
   if (!response.ok) {
