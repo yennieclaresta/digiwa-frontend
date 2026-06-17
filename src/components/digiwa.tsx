@@ -224,6 +224,7 @@ export function TextInputField({
   label,
   error,
   multiline,
+  value,
   ...props
 }: TextInputProps & {
   label: string;
@@ -238,6 +239,7 @@ export function TextInputField({
         textAlignVertical={multiline ? 'top' : 'center'}
         style={[styles.input, multiline && styles.textarea, error && styles.inputError]}
         {...props}
+        value={value ?? ''}
       />
       {error ? <Text style={styles.errorText}>{error}</Text> : null}
     </View>
