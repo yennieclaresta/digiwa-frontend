@@ -94,7 +94,7 @@ class Repository(ABC):
     def update_request_status(self, request_id: str, admin_id: str, status: str, admin_note: str | None) -> dict[str, Any]: ...
 
     @abstractmethod
-    def create_mock_document(self, request_id: str, admin_id: str) -> dict[str, Any]: ...
+    def create_mock_document(self, request_id: str, admin_id: str, *, public_id: str | None = None, file_name_override: str | None = None, document_label: str | None = None) -> dict[str, Any]: ...
 
     @abstractmethod
     def fetch_document(self, document_id: str) -> dict[str, Any] | None: ...
@@ -334,21 +334,25 @@ class SupabaseRepository(Repository):
         ).execute()
         return self.fetch_request(request_id)
 
-    def create_mock_document(self, request_id: str, admin_id: str) -> dict[str, Any]:
+    def create_mock_document(self, request_id: str, admin_id: str, *, public_id: str | None = None, file_name_override: str | None = None, document_label: str | None = None) -> dict[str, Any]:
         request_row = self.fetch_request(request_id)
         if not request_row:
             raise KeyError("not_found")
         if request_row["status"] != "selesai":
             raise ValueError("not_done")
-        file_name = f'{request_row["tracking_number"]}.pdf'
-        generated = {
+        file_name = file_name_override or f'{request_row["tracking_number"]}.pdf'
+        cloud_name = self.config.get("CLOUDINARY_CLOUD_NAME", "")
+        public_url = f'https://res.cloudinary.com/{cloud_name}/image/upload/{public_id}' if public_id and cloud_name else ""
+        generated: dict[str, Any] = {
             "request_id": request_id,
             "generated_by": admin_id,
             "document_type": request_row["service_type"],
             "file_name": file_name,
-            "storage_path": f'mock-generated/{file_name}',
-            "public_url": "",
+            "storage_path": public_id or f'mock-generated/{file_name}',
+            "public_url": public_url,
         }
+        if document_label:
+            generated["document_label"] = document_label
         created = self._first(self.client.table("generated_documents").insert(generated).execute())
         return created or generated
 
@@ -589,21 +593,25 @@ class PostgresRepository(Repository):
             conn.execute("SELECT update_request_status(%s, %s, %s::request_status, %s)", (request_id, admin_id, status, admin_note))
         return to_plain_data(self.fetch_request(request_id))
 
-    def create_mock_document(self, request_id: str, admin_id: str) -> dict[str, Any]:
+    def create_mock_document(self, request_id: str, admin_id: str, *, public_id: str | None = None, file_name_override: str | None = None, document_label: str | None = None) -> dict[str, Any]:
         request_row = self.fetch_request(request_id)
         if not request_row:
             raise KeyError("not_found")
         if request_row["status"] != "selesai":
             raise ValueError("not_done")
-        file_name = f'{request_row["tracking_number"]}.pdf'
-        generated = {
+        file_name = file_name_override or f'{request_row["tracking_number"]}.pdf'
+        cloud_name = self.config.get("CLOUDINARY_CLOUD_NAME", "")
+        public_url = f'https://res.cloudinary.com/{cloud_name}/image/upload/{public_id}' if public_id and cloud_name else ""
+        generated: dict[str, Any] = {
             "request_id": request_id,
             "generated_by": admin_id,
             "document_type": request_row["service_type"],
             "file_name": file_name,
-            "storage_path": f'mock-generated/{file_name}',
-            "public_url": "",
+            "storage_path": public_id or f'mock-generated/{file_name}',
+            "public_url": public_url,
         }
+        if document_label:
+            generated["document_label"] = document_label
         keys = list(generated.keys())
         with self._connect() as conn:
             created = conn.execute(

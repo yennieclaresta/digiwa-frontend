@@ -298,8 +298,17 @@ def upload_signature():
 def create_mock_document():
     payload = request.get_json(silent=True) or {}
     request_id = str(payload.get("requestId", "")).strip()
+    public_id = str(payload.get("publicId") or "").strip() or None
+    file_name = str(payload.get("fileName") or "").strip() or None
+    document_label = str(payload.get("documentLabel") or "").strip() or None
     try:
-        document = get_repository().create_mock_document(request_id, g.user["id"])
+        document = get_repository().create_mock_document(
+            request_id,
+            g.user["id"],
+            public_id=public_id,
+            file_name_override=file_name,
+            document_label=document_label,
+        )
     except KeyError:
         return error("Pengajuan tidak ditemukan.", 404)
     except ValueError:
