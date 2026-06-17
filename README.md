@@ -1,56 +1,123 @@
-# Welcome to your Expo app 👋
+# DIGIWA
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+DIGIWA is an Expo mobile app with Expo web support, a Flask backend, and a PostgreSQL or Supabase data layer for digital warga service requests.
 
-## Get started
+## Stack
 
-1. Install dependencies
+- Mobile and web: Expo Router, React Native, TypeScript
+- Backend: Flask
+- Database: PostgreSQL or Supabase
+- File upload: Cloudinary signed upload
+- API testing: Postman collection in [postman](/C:/Users/Rahfi/client-digiwa-claresta/postman)
 
-   ```bash
-   npm install
-   ```
+## Run
 
-2. Start the app
-
-   ```bash
-   npx expo start
-   ```
-
-In the output, you'll find options to open the app in a
-
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
-
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
-
-## Get a fresh project
-
-When you're ready, run:
+### 1. Install app dependencies
 
 ```bash
-npm run reset-project
+npm install
 ```
 
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
+### 2. Configure backend
 
-### Other setup steps
+Copy [backend/.env.example](/C:/Users/Rahfi/client-digiwa-claresta/backend/.env.example) to `backend/.env` and fill:
 
-- To set up ESLint for linting, run `npx expo lint`, or follow our guide on ["Using ESLint and Prettier"](https://docs.expo.dev/guides/using-eslint/)
-- If you'd like to set up unit testing, follow our guide on ["Unit Testing with Jest"](https://docs.expo.dev/develop/unit-testing/)
-- Learn more about the TypeScript setup in this template in our guide on ["Using TypeScript"](https://docs.expo.dev/guides/typescript/)
+- database config
+- `APP_SECRET`
+- Cloudinary config if you want real upload testing
 
-## Learn more
+### 3. Prepare database
 
-To learn more about developing your project with Expo, look at the following resources:
+For a fresh database:
 
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
+```sql
+\i database/schema.sql
+```
 
-## Join the community
+For an existing database that needs the no-NIK fix:
 
-Join our community of developers creating universal apps.
+```sql
+\i database/schema_01.sql
+```
 
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+### 4. Seed demo users
+
+Run:
+
+```bash
+cd backend
+python seed_demo.py
+```
+
+Demo credentials created by the script:
+
+- Petugas: `admin@digiwa.id` / `admin123`
+- Warga: `demo.warga@example.com` / `password123`
+
+### 5. Run backend
+
+```bash
+cd backend
+python app.py
+```
+
+Default backend URL:
+
+```text
+http://127.0.0.1:5000
+```
+
+### 6. Configure mobile/web app
+
+Copy [/.env.example](/C:/Users/Rahfi/client-digiwa-claresta/.env.example) to `.env` and set:
+
+```env
+EXPO_PUBLIC_API_BASE_URL=http://YOUR_LOCAL_IP:5000
+```
+
+Use your machine IP for phone testing, not `127.0.0.1`.
+
+### 7. Run Expo
+
+```bash
+npm run start
+```
+
+For web showcase:
+
+```bash
+npm run web
+```
+
+## Manual API Testing
+
+Import both files into Postman:
+
+- [DIGIWA.postman_collection.json](/C:/Users/Rahfi/client-digiwa-claresta/postman/DIGIWA.postman_collection.json)
+- [DIGIWA.local.postman_environment.json](/C:/Users/Rahfi/client-digiwa-claresta/postman/DIGIWA.local.postman_environment.json)
+
+Suggested order:
+
+1. `Health`
+2. `Services`
+3. `Login Petugas`
+4. `Login Warga`
+5. `Create Request KTP`
+6. `Petugas List Requests`
+7. `Update Request Status`
+8. `Generate Mock Document`
+9. `Download Document`
+10. `List Notifications`
+
+## Current Behavior
+
+- Login does not use a role selector. Petugas is detected from the `@digiwa.id` email account, while warga can login with email or NIK.
+- Warga can register with or without NIK.
+- Petugas must already exist; the demo seed script creates one.
+- PDF output is intentionally dummy/generated placeholder content for showcase and flow validation.
+
+## Production Showcase Notes
+
+- Expo web is the web mode for this project; there is no separate React website codebase.
+- The current structure is backend-ready and demo-ready.
+- For a real production rollout, the main unfinished piece is replacing placeholder PDF output with real signed documents.
