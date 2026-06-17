@@ -10,6 +10,16 @@ import type {
 
 type RawRecord = Record<string, unknown>;
 
+const FILE_LABEL_MAP: Record<string, string> = {
+  'cetak-ktp.pdf': 'Cetak KTP',
+  'surat-ktp.pdf': 'Surat KTP',
+  'cetak-akta-kematian.pdf': 'Cetak Akta Kematian',
+  'surat-akta-kematian.pdf': 'Surat Akta Kematian',
+  'cetak-akta-kelahiran.pdf': 'Cetak Akta Kelahiran',
+  'surat-akta-kelahiran.pdf': 'Surat Akta Kelahiran',
+  'surat-pengantar-rtrw.pdf': 'Surat Pengantar RT/RW',
+};
+
 function asRecord(value: unknown): RawRecord {
   return value && typeof value === 'object' && !Array.isArray(value) ? (value as RawRecord) : {};
 }
@@ -72,11 +82,15 @@ export function mapTimelineItem(raw: unknown): TimelineItem {
 
 export function mapGeneratedDocument(raw: unknown): GeneratedDocument {
   const row = asRecord(raw);
+  const fileName = asString(row.file_name || row.fileName);
+  const documentLabel =
+    asString(row.document_label || row.documentLabel) || FILE_LABEL_MAP[fileName] || fileName;
   return {
     id: asString(row.id),
     requestId: asString(row.request_id || row.requestId),
     documentType: asString(row.document_type || row.documentType) as GeneratedDocument['documentType'],
-    fileName: asString(row.file_name || row.fileName),
+    documentLabel,
+    fileName,
     publicUrl: asString(row.public_url || row.publicUrl),
     downloadUrl: asString(row.download_url || row.downloadUrl),
     generatedAt: asString(row.generated_at || row.generatedAt || row.created_at),

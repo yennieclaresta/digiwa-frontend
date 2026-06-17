@@ -1,9 +1,8 @@
-import { Picker } from '@react-native-picker/picker';
 import * as DocumentPicker from 'expo-document-picker';
 import { useRouter } from 'expo-router';
-import { ReactNode } from 'react';
+import { ReactNode, useEffect, useState } from 'react';
 import type { IconType } from 'react-icons';
-import { FiArrowLeft, FiCheck, FiChevronRight, FiClock, FiFileText, FiInbox, FiUpload } from 'react-icons/fi';
+import { FiArrowLeft, FiCalendar, FiCheck, FiChevronDown, FiChevronLeft, FiChevronRight, FiChevronUp, FiChevronsLeft, FiChevronsRight, FiClock, FiFileText, FiInbox, FiUpload } from 'react-icons/fi';
 import {
   ActivityIndicator,
   KeyboardAvoidingView,
@@ -261,18 +260,94 @@ export function SelectField({
   error?: string;
   placeholder?: string;
 }) {
+  const [open, setOpen] = useState(false);
+  const selectedLabel = options.find((o) => o.value === value)?.label ?? '';
+  const isWeb = Platform.OS === 'web';
+
+  function handleSelect(val: string) {
+    onChange(val);
+    setOpen(false);
+  }
+
+  const trigger = (
+    <Pressable
+      onPress={() => setOpen((prev) => !prev)}
+      style={[styles.selectTrigger, error ? styles.inputError : undefined]}
+    >
+      <Text style={[styles.selectTriggerText, !value ? styles.selectPlaceholder : undefined]} numberOfLines={1}>
+        {selectedLabel || placeholder}
+      </Text>
+      <ReactIcon icon={FiChevronDown} size={16} color={colors.textSecondary} />
+    </Pressable>
+  );
+
+  if (isWeb) {
+    return (
+      <View style={styles.field}>
+        <Text style={styles.label}>{label}</Text>
+        <Pressable
+          onPress={() => setOpen((prev) => !prev)}
+          style={[
+            styles.selectTrigger,
+            open ? styles.selectTriggerOpen : undefined,
+            error ? styles.inputError : undefined,
+          ]}
+        >
+          <Text style={[styles.selectTriggerText, !value ? styles.selectPlaceholder : undefined]} numberOfLines={1}>
+            {selectedLabel || placeholder}
+          </Text>
+          <ReactIcon icon={FiChevronDown} size={16} color={colors.textSecondary} />
+        </Pressable>
+        {open ? (
+          <View style={styles.webInlineOptions}>
+            <ScrollView style={{ maxHeight: 240 }} keyboardShouldPersistTaps="handled" nestedScrollEnabled>
+              {options.map((option) => (
+                <Pressable
+                  key={option.value}
+                  style={[styles.webOption, option.value === value ? styles.webOptionSelected : undefined]}
+                  onPress={() => handleSelect(option.value)}
+                >
+                  <Text style={[styles.webOptionText, option.value === value ? styles.webOptionTextSelected : undefined]}>
+                    {option.label}
+                  </Text>
+                  {option.value === value ? <ReactIcon icon={FiCheck} size={14} color={colors.primary} /> : null}
+                </Pressable>
+              ))}
+            </ScrollView>
+          </View>
+        ) : null}
+        {error ? <Text style={styles.errorText}>{error}</Text> : null}
+      </View>
+    );
+  }
+
   return (
     <View style={styles.field}>
       <Text style={styles.label}>{label}</Text>
-      <View style={[styles.pickerWrap, error && styles.inputError]}>
-        <Picker selectedValue={value ?? ''} onValueChange={onChange} style={styles.picker}>
-          <Picker.Item label={placeholder} value="" color={colors.neutral} />
-          {options.map((option) => (
-            <Picker.Item key={option.value} label={option.label} value={option.value} />
-          ))}
-        </Picker>
-      </View>
+      {trigger}
       {error ? <Text style={styles.errorText}>{error}</Text> : null}
+      <Modal visible={open} transparent animationType="slide" onRequestClose={() => setOpen(false)}>
+        <Pressable style={styles.sheetOverlay} onPress={() => setOpen(false)}>
+          <Pressable style={styles.bottomSheet} onPress={() => {}}>
+            <View style={styles.bottomSheetHandle} />
+            <Text style={styles.bottomSheetTitle}>{label}</Text>
+            <ScrollView keyboardShouldPersistTaps="handled">
+              {options.map((option) => (
+                <Pressable
+                  key={option.value}
+                  style={[styles.sheetOption, option.value === value ? styles.sheetOptionSelected : undefined]}
+                  onPress={() => handleSelect(option.value)}
+                >
+                  <Text style={[styles.sheetOptionText, option.value === value ? styles.sheetOptionTextSelected : undefined]}>
+                    {option.label}
+                  </Text>
+                  {option.value === value ? <ReactIcon icon={FiCheck} size={18} color={colors.primary} /> : null}
+                </Pressable>
+              ))}
+            </ScrollView>
+          </Pressable>
+        </Pressable>
+      </Modal>
     </View>
   );
 }
@@ -329,6 +404,317 @@ export function FileUploadField({
         </View>
       </Pressable>
       {error ? <Text style={styles.errorText}>{error}</Text> : null}
+    </View>
+  );
+}
+
+const MONTH_NAMES_ID = [
+  'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni',
+  'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember',
+];
+
+const DAY_HEADERS_ID = ['Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab', 'Min'];
+
+function getDaysInMonth(year: number, month: number) {
+  return new Date(year, month + 1, 0).getDate();
+}
+
+function getFirstDayOffset(year: number, month: number) {
+  return (new Date(year, month, 1).getDay() + 6) % 7;
+}
+
+function buildCalWeeks(year: number, month: number): (number | null)[][] {
+  const totalDays = getDaysInMonth(year, month);
+  const offset = getFirstDayOffset(year, month);
+  const cells: (number | null)[] = [
+    ...Array<null>(offset).fill(null),
+    ...Array.from({ length: totalDays }, (_, i) => i + 1),
+  ];
+  while (cells.length % 7 !== 0) cells.push(null);
+  const weeks: (number | null)[][] = [];
+  for (let i = 0; i < cells.length; i += 7) weeks.push(cells.slice(i, i + 7));
+  return weeks;
+}
+
+function todayParts() {
+  const d = new Date();
+  return { y: d.getFullYear(), m: d.getMonth(), d: d.getDate() };
+}
+
+type CalendarViewProps = {
+  year: number;
+  month: number;
+  selectedDay: number | null;
+  onNavigate: (year: number, month: number) => void;
+  onSelect: (day: number) => void;
+};
+
+function CalendarView({ year, month, selectedDay, onNavigate, onSelect }: CalendarViewProps) {
+  const today = todayParts();
+  const weeks = buildCalWeeks(year, month);
+
+  function prevMonth() {
+    if (month === 0) onNavigate(year - 1, 11);
+    else onNavigate(year, month - 1);
+  }
+  function nextMonth() {
+    if (month === 11) onNavigate(year + 1, 0);
+    else onNavigate(year, month + 1);
+  }
+
+  return (
+    <View style={styles.calendarWrap}>
+      <View style={styles.calHeader}>
+        <Pressable onPress={() => onNavigate(year - 1, month)} style={styles.calNavBtn} hitSlop={8}>
+          <ReactIcon icon={FiChevronsLeft} size={16} color={colors.primary} />
+        </Pressable>
+        <Pressable onPress={prevMonth} style={styles.calNavBtn} hitSlop={8}>
+          <ReactIcon icon={FiChevronLeft} size={16} color={colors.primary} />
+        </Pressable>
+        <Text style={styles.calMonthLabel}>{MONTH_NAMES_ID[month]} {year}</Text>
+        <Pressable onPress={nextMonth} style={styles.calNavBtn} hitSlop={8}>
+          <ReactIcon icon={FiChevronRight} size={16} color={colors.primary} />
+        </Pressable>
+        <Pressable onPress={() => onNavigate(year + 1, month)} style={styles.calNavBtn} hitSlop={8}>
+          <ReactIcon icon={FiChevronsRight} size={16} color={colors.primary} />
+        </Pressable>
+      </View>
+      <View style={styles.calDayHeaders}>
+        {DAY_HEADERS_ID.map((d) => (
+          <Text key={d} style={styles.calDayHeader}>{d}</Text>
+        ))}
+      </View>
+      {weeks.map((week, wi) => (
+        <View key={wi} style={styles.calWeekRow}>
+          {week.map((day, di) => {
+            if (day === null) return <View key={di} style={styles.calCell} />;
+            const isSelected = day === selectedDay;
+            const isToday = year === today.y && month === today.m && day === today.d;
+            return (
+              <Pressable
+                key={di}
+                style={[styles.calCell, isSelected ? styles.calCellSelected : isToday ? styles.calCellToday : undefined]}
+                onPress={() => onSelect(day)}
+              >
+                <Text style={[styles.calCellText, isSelected ? styles.calCellTextSelected : isToday ? styles.calCellTextToday : undefined]}>
+                  {day}
+                </Text>
+              </Pressable>
+            );
+          })}
+        </View>
+      ))}
+    </View>
+  );
+}
+
+export function DatePickerField({
+  label,
+  value,
+  onChange,
+  error,
+}: {
+  label: string;
+  value?: string;
+  onChange: (value: string) => void;
+  error?: string;
+}) {
+  const [open, setOpen] = useState(false);
+  const isWeb = Platform.OS === 'web';
+
+  const parsedInit = value?.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  const [calYear, setCalYear] = useState(parsedInit ? parseInt(parsedInit[1], 10) : new Date().getFullYear());
+  const [calMonth, setCalMonth] = useState(parsedInit ? parseInt(parsedInit[2], 10) - 1 : new Date().getMonth());
+  const [selectedDay, setSelectedDay] = useState<number | null>(parsedInit ? parseInt(parsedInit[3], 10) : null);
+
+  useEffect(() => {
+    const p = value?.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+    if (p) {
+      setCalYear(parseInt(p[1], 10));
+      setCalMonth(parseInt(p[2], 10) - 1);
+      setSelectedDay(parseInt(p[3], 10));
+    } else {
+      setSelectedDay(null);
+    }
+  }, [value]);
+
+  function handleSelect(day: number) {
+    const mm = String(calMonth + 1).padStart(2, '0');
+    const dd = String(day).padStart(2, '0');
+    onChange(`${calYear}-${mm}-${dd}`);
+    setSelectedDay(day);
+    setOpen(false);
+  }
+
+  function handleNavigate(y: number, m: number) {
+    setCalYear(y);
+    setCalMonth(m);
+  }
+
+  const trigger = (
+    <Pressable
+      onPress={() => setOpen((prev) => !prev)}
+      style={[styles.dateTrigger, open ? styles.dateTriggerOpen : undefined, error ? styles.inputError : undefined]}
+    >
+      <Text style={[styles.dateTriggerText, !value ? styles.datePlaceholder : undefined]} numberOfLines={1}>
+        {value || 'Pilih tanggal'}
+      </Text>
+      <ReactIcon icon={FiCalendar} size={16} color={colors.textSecondary} />
+    </Pressable>
+  );
+
+  const calendar = (
+    <CalendarView
+      year={calYear}
+      month={calMonth}
+      selectedDay={selectedDay}
+      onNavigate={handleNavigate}
+      onSelect={handleSelect}
+    />
+  );
+
+  if (isWeb) {
+    return (
+      <View style={styles.field}>
+        <Text style={styles.label}>{label}</Text>
+        {trigger}
+        {open ? <View style={styles.webDatePanel}>{calendar}</View> : null}
+        {error ? <Text style={styles.errorText}>{error}</Text> : null}
+      </View>
+    );
+  }
+
+  return (
+    <View style={styles.field}>
+      <Text style={styles.label}>{label}</Text>
+      {trigger}
+      {error ? <Text style={styles.errorText}>{error}</Text> : null}
+      <Modal visible={open} transparent animationType="slide" onRequestClose={() => setOpen(false)}>
+        <Pressable style={styles.sheetOverlay} onPress={() => setOpen(false)}>
+          <Pressable style={styles.calendarSheet} onPress={() => {}}>
+            <View style={styles.bottomSheetHandle} />
+            <Text style={styles.bottomSheetTitle}>{label}</Text>
+            <ScrollView keyboardShouldPersistTaps="handled">{calendar}</ScrollView>
+          </Pressable>
+        </Pressable>
+      </Modal>
+    </View>
+  );
+}
+
+type TimeSpinnerProps = {
+  value: number;
+  min: number;
+  max: number;
+  label: string;
+  onChange: (v: number) => void;
+};
+
+function TimeSpinner({ value, min, max, label, onChange }: TimeSpinnerProps) {
+  return (
+    <View style={styles.timeSpinner}>
+      <Pressable onPress={() => onChange(value >= max ? min : value + 1)} style={styles.timeSpinBtn} hitSlop={8}>
+        <ReactIcon icon={FiChevronUp} size={22} color={colors.primary} />
+      </Pressable>
+      <Text style={styles.timeSpinValue}>{String(value).padStart(2, '0')}</Text>
+      <Pressable onPress={() => onChange(value <= min ? max : value - 1)} style={styles.timeSpinBtn} hitSlop={8}>
+        <ReactIcon icon={FiChevronDown} size={22} color={colors.primary} />
+      </Pressable>
+      <Text style={styles.timeSpinLabel}>{label}</Text>
+    </View>
+  );
+}
+
+export function TimePickerField({
+  label,
+  value,
+  onChange,
+  error,
+}: {
+  label: string;
+  value?: string;
+  onChange: (value: string) => void;
+  error?: string;
+}) {
+  const [open, setOpen] = useState(false);
+  const isWeb = Platform.OS === 'web';
+
+  const parsedTime = value?.match(/^(\d{1,2}):(\d{2})$/);
+  const [hour, setHour] = useState(parsedTime ? parseInt(parsedTime[1], 10) : 0);
+  const [minute, setMinute] = useState(parsedTime ? parseInt(parsedTime[2], 10) : 0);
+
+  useEffect(() => {
+    const p = value?.match(/^(\d{1,2}):(\d{2})$/);
+    if (p) {
+      setHour(parseInt(p[1], 10));
+      setMinute(parseInt(p[2], 10));
+    }
+  }, [value]);
+
+  function handleConfirm() {
+    const hh = String(hour).padStart(2, '0');
+    const mm = String(minute).padStart(2, '0');
+    onChange(`${hh}:${mm}`);
+    setOpen(false);
+  }
+
+  const picker = (
+    <View style={styles.timePickerBody}>
+      <TimeSpinner value={hour} min={0} max={23} label="Jam" onChange={setHour} />
+      <Text style={styles.timeColon}>:</Text>
+      <TimeSpinner value={minute} min={0} max={59} label="Menit" onChange={setMinute} />
+    </View>
+  );
+
+  const confirmBtn = (
+    <View style={styles.timeConfirmWrap}>
+      <PrimaryButton title="Pilih Waktu" onPress={handleConfirm} />
+    </View>
+  );
+
+  const trigger = (
+    <Pressable
+      onPress={() => setOpen((prev) => !prev)}
+      style={[styles.dateTrigger, open ? styles.dateTriggerOpen : undefined, error ? styles.inputError : undefined]}
+    >
+      <Text style={[styles.dateTriggerText, !value ? styles.datePlaceholder : undefined]} numberOfLines={1}>
+        {value || 'Pilih waktu'}
+      </Text>
+      <ReactIcon icon={FiClock} size={16} color={colors.textSecondary} />
+    </Pressable>
+  );
+
+  if (isWeb) {
+    return (
+      <View style={styles.field}>
+        <Text style={styles.label}>{label}</Text>
+        {trigger}
+        {open ? (
+          <View style={styles.webDatePanel}>
+            {picker}
+            {confirmBtn}
+          </View>
+        ) : null}
+        {error ? <Text style={styles.errorText}>{error}</Text> : null}
+      </View>
+    );
+  }
+
+  return (
+    <View style={styles.field}>
+      <Text style={styles.label}>{label}</Text>
+      {trigger}
+      {error ? <Text style={styles.errorText}>{error}</Text> : null}
+      <Modal visible={open} transparent animationType="slide" onRequestClose={() => setOpen(false)}>
+        <Pressable style={styles.sheetOverlay} onPress={() => setOpen(false)}>
+          <Pressable style={styles.timePickerSheet} onPress={() => {}}>
+            <View style={styles.bottomSheetHandle} />
+            <Text style={styles.bottomSheetTitle}>{label}</Text>
+            {picker}
+            {confirmBtn}
+          </Pressable>
+        </Pressable>
+      </Modal>
     </View>
   );
 }
@@ -682,17 +1068,110 @@ const styles = StyleSheet.create({
     color: colors.danger,
     fontSize: typography.caption,
   },
-  pickerWrap: {
+  selectTrigger: {
     minHeight: 50,
     borderRadius: radius.md,
     borderWidth: 1,
     borderColor: colors.border,
     backgroundColor: colors.surface,
-    overflow: 'hidden',
-    justifyContent: 'center',
+    paddingHorizontal: spacing.lg,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: spacing.sm,
   },
-  picker: {
+  selectTriggerText: {
+    flex: 1,
     color: colors.textPrimary,
+    fontSize: typography.body,
+  },
+  selectPlaceholder: {
+    color: colors.neutral,
+  },
+  selectTriggerOpen: {
+    borderBottomLeftRadius: 0,
+    borderBottomRightRadius: 0,
+  },
+  webInlineOptions: {
+    backgroundColor: colors.surface,
+    borderWidth: 1,
+    borderTopWidth: 0,
+    borderColor: colors.border,
+    borderBottomLeftRadius: radius.md,
+    borderBottomRightRadius: radius.md,
+    overflow: 'hidden',
+  },
+  webOption: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.md,
+    gap: spacing.sm,
+  },
+  webOptionSelected: {
+    backgroundColor: colors.primaryLight,
+  },
+  webOptionText: {
+    flex: 1,
+    color: colors.textPrimary,
+    fontSize: typography.body,
+  },
+  webOptionTextSelected: {
+    color: colors.primary,
+    fontWeight: '700',
+  },
+  sheetOverlay: {
+    flex: 1,
+    backgroundColor: colors.overlay,
+    justifyContent: 'flex-end',
+  },
+  bottomSheet: {
+    backgroundColor: colors.surface,
+    borderTopLeftRadius: radius.xl,
+    borderTopRightRadius: radius.xl,
+    paddingBottom: spacing.xxxl,
+    maxHeight: '80%',
+  },
+  bottomSheetHandle: {
+    width: 40,
+    height: 4,
+    borderRadius: radius.pill,
+    backgroundColor: colors.border,
+    alignSelf: 'center',
+    marginTop: spacing.md,
+    marginBottom: spacing.lg,
+  },
+  bottomSheetTitle: {
+    color: colors.textPrimary,
+    fontSize: typography.h3,
+    fontWeight: '900',
+    paddingHorizontal: spacing.lg,
+    paddingBottom: spacing.md,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border,
+  },
+  sheetOption: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.lg,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border,
+    gap: spacing.sm,
+  },
+  sheetOptionSelected: {
+    backgroundColor: colors.primaryLight,
+  },
+  sheetOptionText: {
+    flex: 1,
+    color: colors.textPrimary,
+    fontSize: typography.body,
+  },
+  sheetOptionTextSelected: {
+    color: colors.primary,
+    fontWeight: '700',
   },
   uploadBox: {
     borderWidth: 1,
@@ -1011,5 +1490,159 @@ const styles = StyleSheet.create({
     flex: 1,
     color: colors.textPrimary,
     lineHeight: 20,
+  },
+  dateTrigger: {
+    minHeight: 50,
+    borderRadius: radius.md,
+    borderWidth: 1,
+    borderColor: colors.border,
+    backgroundColor: colors.surface,
+    paddingHorizontal: spacing.lg,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: spacing.sm,
+  },
+  dateTriggerOpen: {
+    borderBottomLeftRadius: 0,
+    borderBottomRightRadius: 0,
+  },
+  dateTriggerText: {
+    flex: 1,
+    color: colors.textPrimary,
+    fontSize: typography.body,
+  },
+  datePlaceholder: {
+    color: colors.neutral,
+  },
+  webDatePanel: {
+    backgroundColor: colors.surface,
+    borderWidth: 1,
+    borderTopWidth: 0,
+    borderColor: colors.border,
+    borderBottomLeftRadius: radius.md,
+    borderBottomRightRadius: radius.md,
+    padding: spacing.md,
+  },
+  calendarWrap: {
+    gap: spacing.xs,
+    paddingHorizontal: spacing.sm,
+    paddingBottom: spacing.sm,
+  },
+  calHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingBottom: spacing.sm,
+    gap: spacing.sm,
+  },
+  calNavBtn: {
+    width: 32,
+    height: 32,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: radius.sm,
+    backgroundColor: colors.primaryLight,
+  },
+  calMonthLabel: {
+    flex: 1,
+    textAlign: 'center',
+    color: colors.textPrimary,
+    fontWeight: '900',
+    fontSize: typography.body,
+  },
+  calDayHeaders: {
+    flexDirection: 'row',
+  },
+  calDayHeader: {
+    flex: 1,
+    textAlign: 'center',
+    color: colors.textSecondary,
+    fontSize: typography.caption,
+    fontWeight: '700',
+    paddingVertical: spacing.xs,
+  },
+  calWeekRow: {
+    flexDirection: 'row',
+  },
+  calCell: {
+    flex: 1,
+    height: 38,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: radius.sm,
+  },
+  calCellSelected: {
+    backgroundColor: colors.primary,
+  },
+  calCellToday: {
+    backgroundColor: colors.primaryLight,
+  },
+  calCellText: {
+    color: colors.textPrimary,
+    fontSize: typography.bodySmall,
+  },
+  calCellTextSelected: {
+    color: colors.textInverse,
+    fontWeight: '900',
+  },
+  calCellTextToday: {
+    color: colors.primary,
+    fontWeight: '800',
+  },
+  calendarSheet: {
+    backgroundColor: colors.surface,
+    borderTopLeftRadius: radius.xl,
+    borderTopRightRadius: radius.xl,
+    paddingBottom: spacing.xxxl,
+    maxHeight: '85%',
+  },
+  timePickerBody: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: spacing.xl,
+    paddingVertical: spacing.xl,
+    paddingHorizontal: spacing.lg,
+  },
+  timeColon: {
+    color: colors.textPrimary,
+    fontSize: 32,
+    fontWeight: '900',
+    marginBottom: spacing.xxl,
+  },
+  timeSpinner: {
+    alignItems: 'center',
+    gap: spacing.sm,
+  },
+  timeSpinBtn: {
+    width: 48,
+    height: 48,
+    borderRadius: radius.md,
+    backgroundColor: colors.primaryLight,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  timeSpinValue: {
+    color: colors.textPrimary,
+    fontSize: 32,
+    fontWeight: '900',
+    minWidth: 64,
+    textAlign: 'center',
+  },
+  timeSpinLabel: {
+    color: colors.textSecondary,
+    fontSize: typography.caption,
+    fontWeight: '700',
+  },
+  timeConfirmWrap: {
+    paddingHorizontal: spacing.lg,
+    paddingBottom: spacing.lg,
+  },
+  timePickerSheet: {
+    backgroundColor: colors.surface,
+    borderTopLeftRadius: radius.xl,
+    borderTopRightRadius: radius.xl,
+    paddingBottom: spacing.xxxl,
   },
 });

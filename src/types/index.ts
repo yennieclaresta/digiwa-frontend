@@ -46,6 +46,7 @@ export type GeneratedDocument = {
   id: string;
   requestId: string;
   documentType: ServiceType;
+  documentLabel: string;
   fileName: string;
   publicUrl: string;
   downloadUrl?: string;

@@ -16,6 +16,7 @@ import {
   updateRequestStatus as updateRequestStatusRequest,
   updateMyPassword,
 } from '@/services/api';
+import { getDispatchDocuments } from '@/utils/documentDispatch';
 import {
   mapAdminActivity,
   mapGeneratedDocument,
@@ -289,6 +290,25 @@ export function AppProvider({ children }: { children: ReactNode }) {
       adminNote: adminNote?.trim() || '',
     });
     const updatedRequest = mapRequestDetail(response.request);
+
+    if (status === 'selesai') {
+      const docsToDispatch = getDispatchDocuments(updatedRequest.serviceType);
+      await Promise.allSettled(
+        docsToDispatch.map((doc) =>
+          generateDocumentRequest(token, requestId, {
+            publicId: doc.publicId,
+            fileName: doc.fileName,
+            documentLabel: doc.documentLabel,
+          }),
+        ),
+      );
+      const refreshedResponse = await getRequest(token, requestId);
+      const refreshedRequest = mapRequestDetail(refreshedResponse.request);
+      setRequests((previous) => mergeRequest(previous, refreshedRequest));
+      await loadAppData(token, currentUser);
+      return refreshedRequest;
+    }
+
     setRequests((previous) => mergeRequest(previous, updatedRequest));
     await loadAppData(token, currentUser);
     return updatedRequest;
