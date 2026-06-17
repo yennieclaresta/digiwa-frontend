@@ -99,6 +99,9 @@ class Repository(ABC):
     @abstractmethod
     def fetch_document(self, document_id: str) -> dict[str, Any] | None: ...
 
+    @abstractmethod
+    def update_warga_nik(self, user_id: str, nik: str) -> None: ...
+
     def serialize_user(self, row: dict[str, Any]) -> dict[str, Any]:
         warga_profile = first_nested(row.get("warga_profiles"))
         admin_profile = first_nested(row.get("admin_profiles"))
@@ -365,6 +368,9 @@ class SupabaseRepository(Repository):
             .limit(1)
             .execute()
         )
+
+    def update_warga_nik(self, user_id: str, nik: str) -> None:
+        self.client.table("warga_profiles").update({"nik": nik}).eq("user_id", user_id).execute()
 
 class PostgresRepository(Repository):
     def __init__(self, config: dict[str, Any]):
@@ -645,3 +651,7 @@ class PostgresRepository(Repository):
                 (document_id,),
             ).fetchone()
         return to_plain_data(row)
+
+    def update_warga_nik(self, user_id: str, nik: str) -> None:
+        with self._connect() as conn:
+            conn.execute("UPDATE warga_profiles SET nik = %s WHERE user_id = %s", (nik, user_id))

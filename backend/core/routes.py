@@ -263,7 +263,16 @@ def update_request_status(request_id: str):
         return error("Status tidak valid.", 400)
     if status in {"revisi", "ditolak"} and not admin_note:
         return error("Catatan admin wajib diisi.", 400)
-    updated = get_repository().update_request_status(request_id, g.user["id"], status, admin_note)
+    repo = get_repository()
+    updated = repo.update_request_status(request_id, g.user["id"], status, admin_note)
+    if status == "selesai" and updated.get("service_type") == "ktp":
+        metadata = updated.get("metadata") or {}
+        nik = str(metadata.get("nik", "")).strip()
+        if is_valid_nik(nik):
+            try:
+                repo.update_warga_nik(str(updated["user_id"]), nik)
+            except Exception:
+                pass
     return jsonify({"request": normalize_request(updated), "message": "Status berhasil diperbarui."})
 
 @api.route("/uploads/signature", methods=["POST"])
