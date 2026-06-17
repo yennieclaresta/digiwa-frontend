@@ -151,10 +151,14 @@ export function requestUploadSignature(token: string, serviceType: string) {
   });
 }
 
-export function generateDocument(token: string, requestId: string) {
+export function generateDocument(
+  token: string,
+  requestId: string,
+  overrides?: { publicId?: string; fileName?: string; documentLabel?: string },
+) {
   return apiRequest<{ document: unknown }>('/documents/mock', {
     method: 'POST',
     token,
-    body: { requestId },
+    body: { requestId, ...overrides },
   });
 }

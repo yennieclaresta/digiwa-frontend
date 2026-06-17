@@ -111,10 +111,6 @@ export function StatusDetailScreen() {
     );
   }
 
-  async function handleDownload() {
-    await openRemoteFile(latestDocument(request)?.downloadUrl || latestDocument(request)?.publicUrl);
-  }
-
   return (
     <Screen>
       <AppHeader title="Detail Pengajuan" subtitle={request.trackingNumber} showBack />
@@ -136,16 +132,19 @@ export function StatusDetailScreen() {
       <SectionTitle title="Berkas Diunggah" />
       <DocumentList files={request.uploadedFiles} />
 
-      {request.serviceType === 'ktp' && request.status === 'selesai' ? (
-        <PrimaryButton
-          title="Download PDF KTP"
-          icon={FiDownload}
-          onPress={handleDownload}
-          disabled={!latestDocument(request)}
-        />
-      ) : null}
-
-      {request.serviceType !== 'ktp' && request.status === 'selesai' ? (
+      {request.status === 'selesai' && request.generatedDocuments.length > 0 ? (
+        <>
+          <SectionTitle title="Dokumen Tersedia" subtitle="Klik tombol di bawah untuk mengunduh dokumen Anda." />
+          {request.generatedDocuments.map((doc) => (
+            <PrimaryButton
+              key={doc.id}
+              title={`Download ${doc.documentLabel || doc.fileName}`}
+              icon={FiDownload}
+              onPress={() => void openRemoteFile(doc.downloadUrl || doc.publicUrl)}
+            />
+          ))}
+        </>
+      ) : request.status === 'selesai' ? (
         <InfoBox>Surat selesai diproses. Silakan ambil sesuai arahan petugas atau unduh jika tersedia.</InfoBox>
       ) : null}
     </Screen>
@@ -282,10 +281,24 @@ function AdminRequestDetailContent({
       </View>
 
       <SectionTitle title="Cetak Dokumen" />
-      <View style={styles.printActions}>
-        <SecondaryButton title="Generate PDF" icon={FiPrinter} onPress={handleGeneratePDF} loading={documentBusy} style={styles.printButton} />
-        <PrimaryButton title="Download" icon={FiDownload} onPress={handleGeneratePDF} loading={documentBusy} style={styles.printButton} />
-      </View>
+      {request.generatedDocuments.length > 0 ? (
+        <View style={styles.printActions}>
+          {request.generatedDocuments.map((doc) => (
+            <SecondaryButton
+              key={doc.id}
+              title={doc.documentLabel || doc.fileName}
+              icon={FiDownload}
+              onPress={() => void openRemoteFile(doc.downloadUrl || doc.publicUrl)}
+              style={styles.printButton}
+            />
+          ))}
+        </View>
+      ) : (
+        <View style={styles.printActions}>
+          <SecondaryButton title="Generate PDF" icon={FiPrinter} onPress={handleGeneratePDF} loading={documentBusy} style={styles.printButton} />
+          <PrimaryButton title="Download" icon={FiDownload} onPress={handleGeneratePDF} loading={documentBusy} style={styles.printButton} />
+        </View>
+      )}
     </Screen>
   );
 }

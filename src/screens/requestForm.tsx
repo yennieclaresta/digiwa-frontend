@@ -8,6 +8,7 @@ import {
   AppHeader,
   CheckRow,
   ConfirmationModal,
+  DatePickerField,
   EmptyState,
   FileUploadField,
   InfoBox,
@@ -19,6 +20,7 @@ import {
   SectionTitle,
   SelectField,
   TextInputField,
+  TimePickerField,
 } from '@/components/digiwa';
 import { getServiceConfig, statementText } from '@/constants/services';
 import { colors, radius, spacing, typography } from '@/constants/theme';
@@ -342,6 +344,20 @@ export function RequestFormScreen() {
                           ? field.options.filter((opt) => opt.value === 'KTP Baru')
                           : field.options
                       }
+                      error={errors[field.name]?.message as string | undefined}
+                    />
+                  ) : field.type === 'date' ? (
+                    <DatePickerField
+                      label={field.label}
+                      value={value}
+                      onChange={onChange}
+                      error={errors[field.name]?.message as string | undefined}
+                    />
+                  ) : field.type === 'time' ? (
+                    <TimePickerField
+                      label={field.label}
+                      value={value}
+                      onChange={onChange}
                       error={errors[field.name]?.message as string | undefined}
                     />
                   ) : (
