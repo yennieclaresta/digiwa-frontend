@@ -365,6 +365,147 @@
           }
         },
         {
+          "name": "Create Request Akta Kelahiran",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const json = pm.response.json();",
+                  "if (json.request && json.request.id) pm.environment.set('requestId', json.request.id);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{wargaToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"serviceType\": \"akta_kelahiran\",\n  \"statementAccepted\": true,\n  \"formData\": {\n    \"namaAnak\": \"Bayi Putra Wijaya\",\n    \"jenisKelaminAnak\": \"Laki-laki\",\n    \"tempatLahirAnak\": \"Bandung\",\n    \"tanggalLahirAnak\": \"2026-05-01\",\n    \"waktuLahir\": \"03:45\",\n    \"anakKe\": \"1\",\n    \"tempatDilahirkan\": \"Rumah Sakit\",\n    \"namaAyah\": \"Budi Wijaya\",\n    \"nikAyah\": \"3275010101850001\",\n    \"tempatLahirAyah\": \"Bandung\",\n    \"tanggalLahirAyah\": \"1985-01-01\",\n    \"pekerjaanAyah\": \"Karyawan Swasta\",\n    \"alamatAyah\": \"{{registerAddress}}\",\n    \"namaIbu\": \"Siti Aminah\",\n    \"nikIbu\": \"3275014401900001\",\n    \"tempatLahirIbu\": \"Bandung\",\n    \"tanggalLahirIbu\": \"1990-01-04\",\n    \"pekerjaanIbu\": \"Guru\",\n    \"alamatIbu\": \"{{registerAddress}}\",\n    \"namaPelapor\": \"Budi Wijaya\",\n    \"nikPelapor\": \"3275010101850001\",\n    \"hubunganPelapor\": \"Ayah\",\n    \"nomorHpPelapor\": \"{{registerPhone}}\",\n    \"alamatPelapor\": \"{{registerAddress}}\"\n  },\n  \"uploadedFiles\": [\n    {\n      \"name\": \"surat-lahir.pdf\",\n      \"type\": \"application/pdf\",\n      \"size\": 380000,\n      \"publicUrl\": \"{{sampleFileUrl}}\",\n      \"storagePath\": \"{{sampleStoragePath}}\",\n      \"fileCategory\": \"surat_keterangan_lahir\"\n    }\n  ]\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/requests",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "requests"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Create Request Akta Kematian",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const json = pm.response.json();",
+                  "if (json.request && json.request.id) pm.environment.set('requestId', json.request.id);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{wargaToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"serviceType\": \"akta_kematian\",\n  \"statementAccepted\": true,\n  \"formData\": {\n    \"namaAlmarhum\": \"Hasan Basri\",\n    \"nikAlmarhum\": \"3275010101500001\",\n    \"nomorKk\": \"{{registerKkNumber}}\",\n    \"jenisKelamin\": \"Laki-laki\",\n    \"tempatLahir\": \"Bandung\",\n    \"tanggalLahir\": \"1950-01-01\",\n    \"agama\": \"Islam\",\n    \"statusPerkawinan\": \"Kawin\",\n    \"pekerjaan\": \"Pensiunan\",\n    \"alamatTerakhir\": \"{{registerAddress}}\",\n    \"tanggalMeninggal\": \"2026-06-10\",\n    \"waktuMeninggal\": \"06:30\",\n    \"tempatMeninggal\": \"RSUD Kota Bandung\",\n    \"penyebabKematian\": \"Sakit\",\n    \"lokasiPemakaman\": \"TPU Cikutra\",\n    \"namaPelapor\": \"Siti Aminah\",\n    \"nikPelapor\": \"3275014401900001\",\n    \"hubunganPelapor\": \"Anak\",\n    \"nomorHpPelapor\": \"{{registerPhone}}\",\n    \"alamatPelapor\": \"{{registerAddress}}\"\n  },\n  \"uploadedFiles\": [\n    {\n      \"name\": \"surat-kematian.pdf\",\n      \"type\": \"application/pdf\",\n      \"size\": 360000,\n      \"publicUrl\": \"{{sampleFileUrl}}\",\n      \"storagePath\": \"{{sampleStoragePath}}\",\n      \"fileCategory\": \"surat_keterangan_kematian\"\n    }\n  ]\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/requests",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "requests"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Create Request Surat RT/RW",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const json = pm.response.json();",
+                  "if (json.request && json.request.id) pm.environment.set('requestId', json.request.id);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{wargaToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"serviceType\": \"surat_rt_rw\",\n  \"statementAccepted\": true,\n  \"formData\": {\n    \"namaLengkap\": \"{{registerName}}\",\n    \"nik\": \"3275014401900001\",\n    \"nomorKk\": \"{{registerKkNumber}}\",\n    \"nomorHp\": \"{{registerPhone}}\",\n    \"alamat\": \"{{registerAddress}}\",\n    \"rt\": \"{{registerRt}}\",\n    \"rw\": \"{{registerRw}}\",\n    \"jenisSurat\": \"Surat Keterangan Domisili\",\n    \"keperluanSurat\": \"Pengurusan administrasi bank\",\n    \"instansiTujuan\": \"Bank BRI\",\n    \"catatanTambahan\": \"Mohon segera diproses.\"\n  },\n  \"uploadedFiles\": [\n    {\n      \"name\": \"ktp-pemohon.pdf\",\n      \"type\": \"application/pdf\",\n      \"size\": 250000,\n      \"publicUrl\": \"{{sampleFileUrl}}\",\n      \"storagePath\": \"{{sampleStoragePath}}\",\n      \"fileCategory\": \"ktp\"\n    }\n  ]\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/requests",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "requests"
+              ]
+            }
+          }
+        },
+        {
           "name": "Get Request Detail",
           "request": {
             "auth": {
@@ -454,6 +595,34 @@
                 "notifications",
                 "{{notificationId}}",
                 "read"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Download Document (Warga - Cetak Mandiri KTP)",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{wargaToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/documents/{{documentId}}/download",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "documents",
+                "{{documentId}}",
+                "download"
               ]
             }
           }
