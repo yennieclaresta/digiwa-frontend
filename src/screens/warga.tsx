@@ -4,6 +4,8 @@ import { Alert, Pressable, StyleSheet, Text, View } from 'react-native';
 import {
   FiBell,
   FiCheckCircle,
+  FiChevronDown,
+  FiChevronRight,
   FiEdit3,
   FiFileText,
   FiHelpCircle,
@@ -99,6 +101,9 @@ export function WargaHomeScreen() {
       </View>
 
       <InfoBox>Pastikan data dan dokumen yang diunggah sudah benar agar proses verifikasi lebih cepat.</InfoBox>
+
+      <SectionTitle title="FAQ" subtitle="Pertanyaan umum seputar layanan DIGIWA." />
+      <FaqSection />
     </Screen>
   );
 }
@@ -224,6 +229,78 @@ export function WargaProfileScreen() {
         <PrimaryButton title="Keluar" icon={FiLogOut} onPress={handleLogout} />
       </View>
     </Screen>
+  );
+}
+
+const faqItems = [
+  {
+    question: 'Apa itu Pengajuan KTP?',
+    answer:
+      'Layanan pengajuan Kartu Tanda Penduduk (KTP) secara digital. Digunakan untuk membuat KTP pertama, mengganti KTP yang hilang/rusak, atau memperbarui data. Dokumen yang diperlukan: Kartu Keluarga, Surat Pengantar RT/RW, Pas Foto, dan KTP Lama (jika ada).',
+  },
+  {
+    question: 'Apa itu Permohonan Akta Kelahiran?',
+    answer:
+      'Layanan pendaftaran kelahiran anak secara resmi. Diperlukan dalam 60 hari sejak kelahiran. Dokumen: Surat Keterangan Lahir dari RS/Bidan, Kartu Keluarga, KTP Ayah & Ibu, dan Buku Nikah/Akta Perkawinan.',
+  },
+  {
+    question: 'Apa itu Permohonan Akta Kematian?',
+    answer:
+      'Layanan pencatatan kematian warga secara resmi. Dokumen: KTP Almarhum/Almarhumah, Kartu Keluarga, Surat Keterangan Kematian dari RS atau petugas RT/RW, KTP Pelapor, dan Surat Pengantar RT/RW.',
+  },
+  {
+    question: 'Apa itu Surat Permohonan RT/RW?',
+    answer:
+      'Layanan pembuatan berbagai surat keterangan dari RT/RW, antara lain: Surat Pengantar KTP/KK, Surat Keterangan Domisili, Surat Keterangan Usaha, Surat Keterangan Tidak Mampu, Surat Pengantar Nikah, dan lainnya. Dokumen: KTP dan Kartu Keluarga.',
+  },
+  {
+    question: 'Berapa lama proses pengajuan?',
+    answer:
+      'KTP: 3–7 hari kerja setelah berkas lengkap. Akta Kelahiran & Kematian: 3–5 hari kerja. Surat RT/RW: 1–2 hari kerja. Durasi dapat berubah tergantung kelengkapan dokumen dan antrean.',
+  },
+  {
+    question: 'Jam Kerja Petugas (Jam Operasional)',
+    answer:
+      'Senin – Jumat: 08.00 – 16.00 WIB\nSabtu: 08.00 – 12.00 WIB\nMinggu & Hari Libur Nasional: Tutup\n\nPengajuan online dapat dilakukan kapan saja. Verifikasi dan proses dilakukan pada jam kerja.',
+  },
+];
+
+function FaqSection() {
+  const [openIndex, setOpenIndex] = useState<number | null>(null);
+  return (
+    <View style={styles.faqWrap}>
+      {faqItems.map((item, index) => (
+        <FaqItem
+          key={index}
+          question={item.question}
+          answer={item.answer}
+          open={openIndex === index}
+          onPress={() => setOpenIndex(openIndex === index ? null : index)}
+        />
+      ))}
+    </View>
+  );
+}
+
+function FaqItem({
+  question,
+  answer,
+  open,
+  onPress,
+}: {
+  question: string;
+  answer: string;
+  open: boolean;
+  onPress: () => void;
+}) {
+  return (
+    <View style={styles.faqCard}>
+      <Pressable onPress={onPress} style={styles.faqQuestion}>
+        <Text style={styles.faqQuestionText}>{question}</Text>
+        <ReactIcon icon={open ? FiChevronDown : FiChevronRight} color={colors.primary} size={18} />
+      </Pressable>
+      {open ? <Text style={styles.faqAnswer}>{answer}</Text> : null}
+    </View>
   );
 }
 
@@ -457,5 +534,34 @@ const styles = StyleSheet.create({
     color: colors.textPrimary,
     fontWeight: '800',
     lineHeight: 20,
+  },
+  faqWrap: {
+    gap: spacing.sm,
+  },
+  faqCard: {
+    backgroundColor: colors.surface,
+    borderRadius: radius.lg,
+    borderWidth: 1,
+    borderColor: colors.border,
+    overflow: 'hidden',
+  },
+  faqQuestion: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    padding: spacing.lg,
+    gap: spacing.md,
+  },
+  faqQuestionText: {
+    flex: 1,
+    color: colors.textPrimary,
+    fontWeight: '800',
+    lineHeight: 20,
+  },
+  faqAnswer: {
+    color: colors.textSecondary,
+    lineHeight: 21,
+    paddingHorizontal: spacing.lg,
+    paddingBottom: spacing.lg,
   },
 });

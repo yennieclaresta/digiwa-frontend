@@ -14,12 +14,14 @@ import {
 import {
   AppHeader,
   CheckRow,
+  InfoBox,
   PrimaryButton,
   Screen,
   TextInputField,
 } from '@/components/digiwa';
 import { colors, radius, spacing, typography } from '@/constants/theme';
 import { useApp } from '@/context/AppContext';
+import { getApiBaseUrl } from '@/services/api';
 
 type LoginForm = {
   identifier: string;
@@ -85,6 +87,7 @@ export function LoginScreen() {
   const { login } = useApp();
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const apiBaseUrl = getApiBaseUrl();
   const {
     control,
     handleSubmit,
@@ -123,6 +126,12 @@ export function LoginScreen() {
       </View>
 
       <AppHeader title="Masuk" subtitle="Akun petugas menggunakan email @digiwa.id. Warga dapat login dengan email atau NIK." />
+
+      {__DEV__ ? (
+        <InfoBox>
+          {`Mode debug. Aplikasi ini sedang mengarah ke API: ${apiBaseUrl}. Jika baru mengubah .env, lakukan Reload penuh di Expo Go atau jalankan ulang Metro.`}
+        </InfoBox>
+      ) : null}
 
       <View style={styles.formCard}>
         <Controller

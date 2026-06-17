@@ -1,5 +1,5 @@
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Controller, useForm, useWatch } from 'react-hook-form';
 import { Alert, StyleSheet, Text, View } from 'react-native';
 import { FiArrowLeft, FiArrowRight, FiCheckCircle, FiSend } from 'react-icons/fi';
@@ -74,6 +74,7 @@ export function RequestFormScreen() {
   const { currentUser, submitRequest } = useApp();
   const serviceType = Array.isArray(params.service) ? params.service[0] : params.service;
   const config = getServiceConfig(serviceType as ServiceType);
+
   const [step, setStep] = useState(0);
   const [uploadedFiles, setUploadedFiles] = useState<Record<string, UploadedFile>>({});
   const [fileErrors, setFileErrors] = useState<Record<string, string>>({});
@@ -81,9 +82,11 @@ export function RequestFormScreen() {
   const [statementError, setStatementError] = useState('');
   const [modalVisible, setModalVisible] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  // Shown only on KTP form when account has no NIK. Checked = user declares no NIK.
+  const [nikDisabledForKtp, setNikDisabledForKtp] = useState(!currentUser?.nik);
 
   const defaultValues = useMemo<FormValues>(() => {
-    const base = {
+    return {
       namaLengkap: currentUser?.name ?? '',
       nik: currentUser?.nik ?? '',
       nomorKk: currentUser?.kkNumber ?? '',
@@ -97,16 +100,24 @@ export function RequestFormScreen() {
       nomorHpPelapor: currentUser?.phone ?? '',
       alamatPelapor: currentUser?.address ?? '',
     };
-    return base;
   }, [currentUser]);
 
   const {
     control,
     trigger,
     getValues,
+    setValue,
     formState: { errors },
   } = useForm<FormValues>({ defaultValues });
   const watchedValues = useWatch({ control });
+
+  // Clear alasanKtpBaru when the user switches away from "KTP Baru"
+  useEffect(() => {
+    if (config?.type !== 'ktp') return;
+    if (watchedValues?.jenisPengajuan !== 'KTP Baru') {
+      setValue('alasanKtpBaru', '');
+    }
+  }, [watchedValues?.jenisPengajuan, config?.type, setValue]);
 
   if (!config || !currentUser) {
     return (
@@ -122,83 +133,84 @@ export function RequestFormScreen() {
   const totalSteps = sections.length + 1;
   const isConfirmationStep = step === sections.length;
   const currentSection = sections[step];
+
+  // --- visibility helpers ---
+
+  function isFieldVisible(field: FormField) {
+    if (!field.visibleWhen) return true;
+    const val = watchedValues?.[field.visibleWhen.field] ?? '';
+    return field.visibleWhen.values.includes(val);
+  }
+
+  function isUploadVisible(upload: UploadRequirement) {
+    if (!upload.showWhen) return true;
+    return upload.showWhen.some(({ field, values }) => {
+      const val = watchedValues?.[field] ?? '';
+      return values.includes(val);
+    });
+  }
+
+  function isUploadRequired(upload: UploadRequirement) {
+    if (!isUploadVisible(upload)) return false;
+    if (upload.required) return true;
+    if (!upload.requiredWhen) return false;
+    return upload.requiredWhen.some(({ field, values }) => {
+      const val = watchedValues?.[field] ?? '';
+      return values.includes(val);
+    });
+  }
+
+  // --- NIK-related guards ---
+
+  const nikDisabledThisForm = activeConfig.type === 'ktp' && nikDisabledForKtp;
+
   const hasInvalidNikInput = (fields: FormField[] = []) =>
-    fields.some((field) => {
-      if (field.validation !== 'nik') {
-        return false;
-      }
-      const isAccountNikOptionalForKtp =
-        activeConfig.type === 'ktp' &&
-        field.name === 'nik' &&
-        !activeUser.nik;
-      const required = field.required && !isAccountNikOptionalForKtp;
+    fields.filter(isFieldVisible).some((field) => {
+      if (field.validation !== 'nik') return false;
+      const isNikOptional = activeConfig.type === 'ktp' && field.name === 'nik' && nikDisabledForKtp;
+      const required = field.required && !isNikOptional;
       const value = (watchedValues?.[field.name] ?? '').trim();
-      if (!required && !value) {
-        return false;
-      }
+      if (!required && !value) return false;
       return !nikPattern.test(value);
     });
+
   const nikActionDisabled = isConfirmationStep
     ? sections.some((section) => hasInvalidNikInput(section.fields))
     : hasInvalidNikInput(currentSection.fields);
-  function isUploadRequired(upload: UploadRequirement) {
-    if (upload.required) {
-      return true;
-    }
-    if (!upload.requiredWhen) {
-      return false;
-    }
-    const value = watchedValues?.[upload.requiredWhen.field] ?? '';
-    return upload.requiredWhen.values.includes(value);
-  }
+
+  // --- field rules ---
 
   function fieldRules(field: FormField) {
-    const isAccountNikOptionalForKtp =
-      activeConfig.type === 'ktp' &&
-      field.name === 'nik' &&
-      !activeUser.nik;
-    const required = field.required && !isAccountNikOptionalForKtp;
+    const isNikOptional = activeConfig.type === 'ktp' && field.name === 'nik' && nikDisabledForKtp;
+    const required = field.required && !isNikOptional;
 
     return {
       required: required ? requiredMessage : false,
       validate: (value?: string) => {
-        const currentValue = value ?? '';
-        if (!required && !currentValue) {
-          return true;
-        }
-        if (field.validation === 'nik' && !nikPattern.test(currentValue)) {
-          return 'Format NIK tidak valid.';
-        }
-        if (field.validation === 'kk' && !nikPattern.test(currentValue)) {
-          return 'Nomor KK harus 16 digit.';
-        }
-        if (field.validation === 'email' && !emailPattern.test(currentValue)) {
-          return 'Format email tidak valid.';
-        }
-        if (field.validation === 'phone' && !phonePattern.test(currentValue)) {
-          return 'Nomor HP tidak valid.';
-        }
-        if (field.validation === 'date' && !datePattern.test(currentValue)) {
-          return 'Tanggal wajib menggunakan format YYYY-MM-DD.';
-        }
+        const v = value ?? '';
+        if (!required && !v) return true;
+        if (field.validation === 'nik' && !nikPattern.test(v)) return 'Format NIK tidak valid.';
+        if (field.validation === 'kk' && !nikPattern.test(v)) return 'Nomor KK harus 16 digit.';
+        if (field.validation === 'email' && !emailPattern.test(v)) return 'Format email tidak valid.';
+        if (field.validation === 'phone' && !phonePattern.test(v)) return 'Nomor HP tidak valid.';
+        if (field.validation === 'date' && !datePattern.test(v)) return 'Tanggal wajib menggunakan format YYYY-MM-DD.';
         return true;
       },
     };
   }
 
   function keyboardType(field: FormField) {
-    if (field.type === 'number') {
-      return 'number-pad' as const;
-    }
-    if (field.type === 'email') {
-      return 'email-address' as const;
-    }
+    if (field.type === 'number') return 'number-pad' as const;
+    if (field.type === 'email') return 'email-address' as const;
     return 'default' as const;
   }
+
+  // --- upload validation ---
 
   function validateUploads(uploads: UploadRequirement[] = []) {
     const nextErrors: Record<string, string> = {};
     uploads.forEach((upload) => {
+      if (!isUploadVisible(upload)) return;
       if (isUploadRequired(upload) && !uploadedFiles[upload.key]) {
         nextErrors[upload.key] = 'Mohon unggah dokumen yang diperlukan.';
       }
@@ -206,6 +218,8 @@ export function RequestFormScreen() {
     setFileErrors(nextErrors);
     return Object.keys(nextErrors).length === 0;
   }
+
+  // --- step navigation ---
 
   async function validateCurrentStep() {
     if (isConfirmationStep) {
@@ -217,15 +231,14 @@ export function RequestFormScreen() {
       return true;
     }
 
-    const fieldNames = currentSection.fields?.map((field) => field.name) ?? [];
-    const fieldsValid = fieldNames.length ? await trigger(fieldNames) : true;
+    const visibleFieldNames = (currentSection.fields ?? []).filter(isFieldVisible).map((f) => f.name);
+    const fieldsValid = visibleFieldNames.length ? await trigger(visibleFieldNames) : true;
     const uploadsValid = validateUploads(currentSection.uploads);
 
     if (!fieldsValid || !uploadsValid) {
       Alert.alert('Data belum lengkap.', 'Periksa kembali data dan dokumen yang wajib diisi.');
       return false;
     }
-
     return true;
   }
 
@@ -244,9 +257,11 @@ export function RequestFormScreen() {
   async function handleSubmit() {
     setSubmitting(true);
     try {
-      const allFieldNames = sections.flatMap((section) => section.fields?.map((field) => field.name) ?? []);
+      const allVisibleFieldNames = sections.flatMap((section) =>
+        (section.fields ?? []).filter(isFieldVisible).map((f) => f.name),
+      );
       const allUploads = sections.flatMap((section) => section.uploads ?? []);
-      const fieldsValid = await trigger(allFieldNames);
+      const fieldsValid = await trigger(allVisibleFieldNames);
       const uploadsValid = validateUploads(allUploads);
 
       if (!fieldsValid || !uploadsValid || !statementChecked) {
@@ -265,6 +280,10 @@ export function RequestFormScreen() {
     }
   }
 
+  // --- render ---
+
+  const visibleSectionUploads = currentSection.uploads?.filter(isUploadVisible) ?? [];
+
   return (
     <Screen>
       <AppHeader title={activeConfig.formTitle} subtitle={activeConfig.description} showBack />
@@ -273,44 +292,78 @@ export function RequestFormScreen() {
       {!isConfirmationStep ? (
         <View style={styles.formSection}>
           <SectionTitle title={currentSection.title} subtitle={currentSection.description} />
-          {activeConfig.type === 'ktp' && !activeUser.nik && currentSection.id === 'data-pemohon' ? (
+
+          {activeConfig.type === 'ktp' && currentSection.id === 'data-pemohon' && !activeUser.nik ? (
             <InfoBox>Anda dapat membuat akun tanpa NIK. Untuk kondisi ini, pengajuan yang dapat diproses adalah KTP Baru berdasarkan Nomor KK dan dokumen pendukung.</InfoBox>
           ) : null}
-          {currentSection.fields?.map((field) => (
-            <Controller
-              key={field.name}
-              control={control}
-              name={field.name}
-              rules={fieldRules(field)}
-              render={({ field: { onChange, value } }) =>
-                field.type === 'select' && field.options ? (
-                  <SelectField
-                    label={field.label}
-                    value={value}
-                    onChange={onChange}
-                    options={
-                      activeConfig.type === 'ktp' && !activeUser.nik && field.name === 'jenisPengajuan'
-                        ? field.options.filter((option) => option.value === 'KTP Baru')
-                        : field.options
-                    }
-                    error={errors[field.name]?.message as string | undefined}
-                  />
-                ) : (
-                  <TextInputField
-                    label={activeConfig.type === 'ktp' && !activeUser.nik && field.name === 'nik' ? 'NIK (belum tersedia)' : field.label}
-                    value={value}
-                    onChangeText={onChange}
-                    placeholder={field.placeholder}
-                    keyboardType={keyboardType(field)}
-                    multiline={field.type === 'textarea'}
-                    autoCapitalize={field.type === 'email' ? 'none' : 'sentences'}
-                    error={errors[field.name]?.message as string | undefined}
-                  />
-                )
-              }
-            />
-          ))}
-          {currentSection.uploads?.map((upload) => (
+
+          {currentSection.fields?.flatMap((field) => {
+            const elements = [];
+
+            // NIK disable toggle — only on KTP data-pemohon for accounts without NIK
+            if (
+              activeConfig.type === 'ktp' &&
+              !activeUser.nik &&
+              field.name === 'nik' &&
+              currentSection.id === 'data-pemohon'
+            ) {
+              elements.push(
+                <CheckRow
+                  key="nik-disable-toggle"
+                  checked={nikDisabledForKtp}
+                  onPress={() => {
+                    const next = !nikDisabledForKtp;
+                    setNikDisabledForKtp(next);
+                    if (next) setValue('nik', '');
+                  }}
+                  label="Saya belum memiliki NIK"
+                />,
+              );
+            }
+
+            // Skip fields whose visibleWhen condition is not met
+            if (!isFieldVisible(field)) return elements;
+
+            elements.push(
+              <Controller
+                key={field.name}
+                control={control}
+                name={field.name}
+                rules={fieldRules(field)}
+                render={({ field: { onChange, value } }) =>
+                  field.type === 'select' && field.options ? (
+                    <SelectField
+                      label={field.label}
+                      value={value}
+                      onChange={onChange}
+                      options={
+                        nikDisabledThisForm && field.name === 'jenisPengajuan'
+                          ? field.options.filter((opt) => opt.value === 'KTP Baru')
+                          : field.options
+                      }
+                      error={errors[field.name]?.message as string | undefined}
+                    />
+                  ) : (
+                    <TextInputField
+                      label={nikDisabledThisForm && field.name === 'nik' ? 'NIK (belum tersedia)' : field.label}
+                      value={value}
+                      onChangeText={onChange}
+                      placeholder={field.placeholder}
+                      keyboardType={keyboardType(field)}
+                      multiline={field.type === 'textarea'}
+                      autoCapitalize={field.type === 'email' ? 'none' : 'sentences'}
+                      editable={!(nikDisabledThisForm && field.name === 'nik')}
+                      error={errors[field.name]?.message as string | undefined}
+                    />
+                  )
+                }
+              />,
+            );
+
+            return elements;
+          })}
+
+          {visibleSectionUploads.map((upload) => (
             <FileUploadField
               key={upload.key}
               label={upload.label}
@@ -369,11 +422,30 @@ export function RequestFormScreen() {
       )}
 
       <View style={styles.actions}>
-        {step > 0 ? <SecondaryButton title="Kembali" icon={FiArrowLeft} onPress={() => setStep((current) => current - 1)} style={styles.actionButton} /> : null}
+        {step > 0 ? (
+          <SecondaryButton
+            title="Kembali"
+            icon={FiArrowLeft}
+            onPress={() => setStep((current) => current - 1)}
+            style={styles.actionButton}
+          />
+        ) : null}
         {isConfirmationStep ? (
-          <PrimaryButton title="Kirim Pengajuan" icon={FiSend} onPress={openConfirmation} style={styles.actionButton} disabled={nikActionDisabled} />
+          <PrimaryButton
+            title="Kirim Pengajuan"
+            icon={FiSend}
+            onPress={openConfirmation}
+            style={styles.actionButton}
+            disabled={nikActionDisabled}
+          />
         ) : (
-          <PrimaryButton title="Lanjut" icon={FiArrowRight} onPress={goNext} style={styles.actionButton} disabled={nikActionDisabled} />
+          <PrimaryButton
+            title="Lanjut"
+            icon={FiArrowRight}
+            onPress={goNext}
+            style={styles.actionButton}
+            disabled={nikActionDisabled}
+          />
         )}
       </View>
 
