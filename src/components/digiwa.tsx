@@ -2,6 +2,7 @@ import * as DocumentPicker from 'expo-document-picker';
 import { useRouter } from 'expo-router';
 import { ReactNode, useEffect, useState } from 'react';
 import type { IconType } from 'react-icons';
+import { FaEye, FaEyeSlash } from 'react-icons/fa';
 import { FiArrowLeft, FiCalendar, FiCheck, FiChevronDown, FiChevronLeft, FiChevronRight, FiChevronUp, FiChevronsLeft, FiChevronsRight, FiClock, FiFileText, FiInbox, FiUpload } from 'react-icons/fi';
 import {
   ActivityIndicator,
@@ -234,22 +235,44 @@ export function TextInputField({
   error,
   multiline,
   value,
+  secureTextEntry,
   ...props
 }: TextInputProps & {
   label: string;
   error?: string;
 }) {
+  const [showPassword, setShowPassword] = useState(false);
+
   return (
     <View style={styles.field}>
       <Text style={styles.label}>{label}</Text>
-      <TextInput
-        placeholderTextColor={colors.neutral}
-        multiline={multiline}
-        textAlignVertical={multiline ? 'top' : 'center'}
-        style={[styles.input, multiline && styles.textarea, error && styles.inputError]}
-        {...props}
-        value={value ?? ''}
-      />
+      {secureTextEntry ? (
+        <View style={[styles.inputWrapper, error ? styles.inputWrapperError : undefined]}>
+          <TextInput
+            placeholderTextColor={colors.neutral}
+            style={styles.inputInner}
+            secureTextEntry={!showPassword}
+            {...props}
+            value={value ?? ''}
+          />
+          <Pressable
+            onPress={() => setShowPassword((prev) => !prev)}
+            style={styles.eyeButton}
+            hitSlop={8}
+          >
+            <ReactIcon icon={showPassword ? FaEyeSlash : FaEye} color={colors.textSecondary} size={20} />
+          </Pressable>
+        </View>
+      ) : (
+        <TextInput
+          placeholderTextColor={colors.neutral}
+          multiline={multiline}
+          textAlignVertical={multiline ? 'top' : 'center'}
+          style={[styles.input, multiline && styles.textarea, error && styles.inputError]}
+          {...props}
+          value={value ?? ''}
+        />
+      )}
       {error ? <Text style={styles.errorText}>{error}</Text> : null}
     </View>
   );
@@ -338,7 +361,7 @@ export function SelectField({
       {error ? <Text style={styles.errorText}>{error}</Text> : null}
       <Modal visible={open} transparent animationType="slide" onRequestClose={() => setOpen(false)}>
         <Pressable style={styles.sheetOverlay} onPress={() => setOpen(false)}>
-          <Pressable style={styles.bottomSheet} onPress={() => {}}>
+          <Pressable style={styles.bottomSheet} onPress={() => { }}>
             <View style={styles.bottomSheetHandle} />
             <Text style={styles.bottomSheetTitle}>{label}</Text>
             <ScrollView keyboardShouldPersistTaps="handled">
@@ -532,33 +555,35 @@ export function DatePickerField({
   const [open, setOpen] = useState(false);
   const isWeb = Platform.OS === 'web';
 
-  const parsedInit = value?.match(/^(\d{4})-(\d{2})-(\d{2})$/);
-  const [calYear, setCalYear] = useState(parsedInit ? parseInt(parsedInit[1], 10) : new Date().getFullYear());
-  const [calMonth, setCalMonth] = useState(parsedInit ? parseInt(parsedInit[2], 10) - 1 : new Date().getMonth());
-  const [selectedDay, setSelectedDay] = useState<number | null>(parsedInit ? parseInt(parsedInit[3], 10) : null);
+  const [cal, setCal] = useState(() => {
+    const parsed = value?.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+    return {
+      year: parsed ? parseInt(parsed[1], 10) : new Date().getFullYear(),
+      month: parsed ? parseInt(parsed[2], 10) - 1 : new Date().getMonth(),
+      selectedDay: parsed ? parseInt(parsed[3], 10) : null as number | null,
+    };
+  });
 
   useEffect(() => {
     const p = value?.match(/^(\d{4})-(\d{2})-(\d{2})$/);
-    if (p) {
-      setCalYear(parseInt(p[1], 10));
-      setCalMonth(parseInt(p[2], 10) - 1);
-      setSelectedDay(parseInt(p[3], 10));
-    } else {
-      setSelectedDay(null);
-    }
+    // eslint-disable-next-line
+    setCal({
+      year: p ? parseInt(p[1], 10) : new Date().getFullYear(),
+      month: p ? parseInt(p[2], 10) - 1 : new Date().getMonth(),
+      selectedDay: p ? parseInt(p[3], 10) : null,
+    });
   }, [value]);
 
   function handleSelect(day: number) {
-    const mm = String(calMonth + 1).padStart(2, '0');
+    const mm = String(cal.month + 1).padStart(2, '0');
     const dd = String(day).padStart(2, '0');
-    onChange(`${calYear}-${mm}-${dd}`);
-    setSelectedDay(day);
+    onChange(`${cal.year}-${mm}-${dd}`);
+    setCal((prev) => ({ ...prev, selectedDay: day }));
     setOpen(false);
   }
 
   function handleNavigate(y: number, m: number) {
-    setCalYear(y);
-    setCalMonth(m);
+    setCal((prev) => ({ ...prev, year: y, month: m }));
   }
 
   const trigger = (
@@ -575,9 +600,9 @@ export function DatePickerField({
 
   const calendar = (
     <CalendarView
-      year={calYear}
-      month={calMonth}
-      selectedDay={selectedDay}
+      year={cal.year}
+      month={cal.month}
+      selectedDay={cal.selectedDay}
       onNavigate={handleNavigate}
       onSelect={handleSelect}
     />
@@ -601,7 +626,7 @@ export function DatePickerField({
       {error ? <Text style={styles.errorText}>{error}</Text> : null}
       <Modal visible={open} transparent animationType="slide" onRequestClose={() => setOpen(false)}>
         <Pressable style={styles.sheetOverlay} onPress={() => setOpen(false)}>
-          <Pressable style={styles.calendarSheet} onPress={() => {}}>
+          <Pressable style={styles.calendarSheet} onPress={() => { }}>
             <View style={styles.bottomSheetHandle} />
             <Text style={styles.bottomSheetTitle}>{label}</Text>
             <ScrollView keyboardShouldPersistTaps="handled">{calendar}</ScrollView>
@@ -649,30 +674,35 @@ export function TimePickerField({
   const [open, setOpen] = useState(false);
   const isWeb = Platform.OS === 'web';
 
-  const parsedTime = value?.match(/^(\d{1,2}):(\d{2})$/);
-  const [hour, setHour] = useState(parsedTime ? parseInt(parsedTime[1], 10) : 0);
-  const [minute, setMinute] = useState(parsedTime ? parseInt(parsedTime[2], 10) : 0);
+  const [time, setTime] = useState(() => {
+    const parsed = value?.match(/^(\d{1,2}):(\d{2})$/);
+    return {
+      hour: parsed ? parseInt(parsed[1], 10) : 0,
+      minute: parsed ? parseInt(parsed[2], 10) : 0,
+    };
+  });
 
   useEffect(() => {
     const p = value?.match(/^(\d{1,2}):(\d{2})$/);
-    if (p) {
-      setHour(parseInt(p[1], 10));
-      setMinute(parseInt(p[2], 10));
-    }
+    // eslint-disable-next-line
+    setTime({
+      hour: p ? parseInt(p[1], 10) : 0,
+      minute: p ? parseInt(p[2], 10) : 0,
+    });
   }, [value]);
 
   function handleConfirm() {
-    const hh = String(hour).padStart(2, '0');
-    const mm = String(minute).padStart(2, '0');
+    const hh = String(time.hour).padStart(2, '0');
+    const mm = String(time.minute).padStart(2, '0');
     onChange(`${hh}:${mm}`);
     setOpen(false);
   }
 
   const picker = (
     <View style={styles.timePickerBody}>
-      <TimeSpinner value={hour} min={0} max={23} label="Jam" onChange={setHour} />
+      <TimeSpinner value={time.hour} min={0} max={23} label="Jam" onChange={(h) => setTime((prev) => ({ ...prev, hour: h }))} />
       <Text style={styles.timeColon}>:</Text>
-      <TimeSpinner value={minute} min={0} max={59} label="Menit" onChange={setMinute} />
+      <TimeSpinner value={time.minute} min={0} max={59} label="Menit" onChange={(m) => setTime((prev) => ({ ...prev, minute: m }))} />
     </View>
   );
 
@@ -717,7 +747,7 @@ export function TimePickerField({
       {error ? <Text style={styles.errorText}>{error}</Text> : null}
       <Modal visible={open} transparent animationType="slide" onRequestClose={() => setOpen(false)}>
         <Pressable style={styles.sheetOverlay} onPress={() => setOpen(false)}>
-          <Pressable style={styles.timePickerSheet} onPress={() => {}}>
+          <Pressable style={styles.timePickerSheet} onPress={() => { }}>
             <View style={styles.bottomSheetHandle} />
             <Text style={styles.bottomSheetTitle}>{label}</Text>
             {picker}
@@ -1073,6 +1103,31 @@ const styles = StyleSheet.create({
   },
   inputError: {
     borderColor: colors.danger,
+  },
+  inputWrapper: {
+    minHeight: 50,
+    borderRadius: radius.md,
+    borderWidth: 1,
+    borderColor: colors.border,
+    backgroundColor: colors.surface,
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  inputWrapperError: {
+    borderColor: colors.danger,
+  },
+  inputInner: {
+    flex: 1,
+    minHeight: 50,
+    paddingHorizontal: spacing.lg,
+    color: colors.textPrimary,
+    fontSize: typography.body,
+  },
+  eyeButton: {
+    paddingHorizontal: spacing.md,
+    height: 50,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   errorText: {
     color: colors.danger,
