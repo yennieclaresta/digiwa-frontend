@@ -1,11 +1,11 @@
 {
   "expo": {
     "name": "DIGIWA",
-    "slug": "client-digiwa-claresta",
+    "slug": "digiwa",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
-    "scheme": "clientdigiwaclaresta",
+    "scheme": "digiwa",
     "userInterfaceStyle": "automatic",
     "ios": {
       "icon": "./assets/expo.icon"
