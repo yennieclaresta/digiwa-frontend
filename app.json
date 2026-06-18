@@ -21,7 +21,9 @@
     },
     "web": {
       "output": "static",
-      "favicon": "./assets/images/favicon.png"
+      "favicon": "./assets/images/favicon.png",
+      "title": "DIGIWA - Digitalisasi Data Warga",
+      "description": "Platform digital untuk mengajukan dan memantau layanan administrasi warga secara online."
     },
     "plugins": [
       "expo-router",
