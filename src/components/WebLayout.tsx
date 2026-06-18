@@ -1,7 +1,7 @@
 import { usePathname, useRouter } from 'expo-router';
 import { type ReactNode } from 'react';
 import type { IconType } from 'react-icons';
-import { Platform, Pressable, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
+import { Image, Platform, Pressable, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
 
 import { ReactIcon } from '@/components/digiwa';
 import { colors, radius, shadows, spacing, typography } from '@/constants/theme';
@@ -29,6 +29,11 @@ function SidebarNav({ items }: { items: WebNavItem[] }) {
   return (
     <View style={styles.sidebar}>
       <View style={styles.sidebarLogo}>
+        <Image
+          source={require('../../assets/digiwa.png')}
+          style={styles.sidebarLogoImage}
+          resizeMode="contain"
+        />
         <Text style={styles.sidebarLogoTitle}>DIGIWA</Text>
         <Text style={styles.sidebarLogoSub}>Digitalisasi Data Warga</Text>
       </View>
@@ -87,6 +92,11 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: colors.border,
     gap: spacing.xs,
+  },
+  sidebarLogoImage: {
+    width: 48,
+    height: 48,
+    marginBottom: spacing.xs,
   },
   sidebarLogoTitle: {
     color: colors.primary,

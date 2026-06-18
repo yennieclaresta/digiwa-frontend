@@ -206,7 +206,6 @@ export const services: ServiceConfig[] = [
           { name: 'tempatLahirAyah', label: 'Tempat Lahir Ayah', required: true },
           { name: 'tanggalLahirAyah', label: 'Tanggal Lahir Ayah', required: true, validation: 'date', type: 'date' },
           { name: 'pekerjaanAyah', label: 'Pekerjaan Ayah', required: true },
-          { name: 'alamatAyah', label: 'Alamat Ayah', required: true, type: 'textarea' },
         ],
       },
       {
@@ -218,7 +217,6 @@ export const services: ServiceConfig[] = [
           { name: 'tempatLahirIbu', label: 'Tempat Lahir Ibu', required: true },
           { name: 'tanggalLahirIbu', label: 'Tanggal Lahir Ibu', required: true, validation: 'date', type: 'date' },
           { name: 'pekerjaanIbu', label: 'Pekerjaan Ibu', required: true },
-          { name: 'alamatIbu', label: 'Alamat Ibu', required: true, type: 'textarea' },
         ],
       },
       {

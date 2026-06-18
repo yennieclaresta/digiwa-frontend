@@ -18,6 +18,7 @@ import {
   TextInputProps,
   View,
   ViewStyle,
+  useWindowDimensions,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Svg, { Circle, Ellipse, G, Line, Path, Polygon, Polyline, Rect } from 'react-native-svg';
@@ -120,8 +121,11 @@ export function Screen({
   scroll?: boolean;
   padded?: boolean;
 }) {
+  const { width } = useWindowDimensions();
+  const isDesktop = Platform.OS === 'web' && width > 768;
   const contentStyle = [
     styles.screenContent,
+    isDesktop && styles.screenContentDesktop,
     padded && styles.screenPadded,
     !scroll && styles.screenNoScroll,
   ];
@@ -236,16 +240,18 @@ export function TextInputField({
   multiline,
   value,
   secureTextEntry,
+  required,
   ...props
 }: TextInputProps & {
   label: string;
   error?: string;
+  required?: boolean;
 }) {
   const [showPassword, setShowPassword] = useState(false);
 
   return (
     <View style={styles.field}>
-      <Text style={styles.label}>{label}</Text>
+      <Text style={styles.label}>{label}{required ? <Text style={styles.required}> *</Text> : null}</Text>
       {secureTextEntry ? (
         <View style={[styles.inputWrapper, error ? styles.inputWrapperError : undefined]}>
           <TextInput
@@ -260,7 +266,7 @@ export function TextInputField({
             style={styles.eyeButton}
             hitSlop={8}
           >
-            <ReactIcon icon={showPassword ? FaEyeSlash : FaEye} color={colors.textSecondary} size={20} />
+            <ReactIcon icon={showPassword ? FaEyeSlash : FaEye} color={colors.primary} size={20} />
           </Pressable>
         </View>
       ) : (
@@ -284,6 +290,7 @@ export function SelectField({
   onChange,
   options,
   error,
+  required,
   placeholder = 'Pilih salah satu',
 }: {
   label: string;
@@ -291,6 +298,7 @@ export function SelectField({
   onChange: (value: string) => void;
   options: readonly { label: string; value: string }[];
   error?: string;
+  required?: boolean;
   placeholder?: string;
 }) {
   const [open, setOpen] = useState(false);
@@ -317,7 +325,7 @@ export function SelectField({
   if (isWeb) {
     return (
       <View style={styles.field}>
-        <Text style={styles.label}>{label}</Text>
+        <Text style={styles.label}>{label}{required ? <Text style={styles.required}> *</Text> : null}</Text>
         <Pressable
           onPress={() => setOpen((prev) => !prev)}
           style={[
@@ -356,7 +364,7 @@ export function SelectField({
 
   return (
     <View style={styles.field}>
-      <Text style={styles.label}>{label}</Text>
+      <Text style={styles.label}>{label}{required ? <Text style={styles.required}> *</Text> : null}</Text>
       {trigger}
       {error ? <Text style={styles.errorText}>{error}</Text> : null}
       <Modal visible={open} transparent animationType="slide" onRequestClose={() => setOpen(false)}>
@@ -546,11 +554,13 @@ export function DatePickerField({
   value,
   onChange,
   error,
+  required,
 }: {
   label: string;
   value?: string;
   onChange: (value: string) => void;
   error?: string;
+  required?: boolean;
 }) {
   const [open, setOpen] = useState(false);
   const isWeb = Platform.OS === 'web';
@@ -611,7 +621,7 @@ export function DatePickerField({
   if (isWeb) {
     return (
       <View style={styles.field}>
-        <Text style={styles.label}>{label}</Text>
+        <Text style={styles.label}>{label}{required ? <Text style={styles.required}> *</Text> : null}</Text>
         {trigger}
         {open ? <View style={styles.webDatePanel}>{calendar}</View> : null}
         {error ? <Text style={styles.errorText}>{error}</Text> : null}
@@ -621,7 +631,7 @@ export function DatePickerField({
 
   return (
     <View style={styles.field}>
-      <Text style={styles.label}>{label}</Text>
+      <Text style={styles.label}>{label}{required ? <Text style={styles.required}> *</Text> : null}</Text>
       {trigger}
       {error ? <Text style={styles.errorText}>{error}</Text> : null}
       <Modal visible={open} transparent animationType="slide" onRequestClose={() => setOpen(false)}>
@@ -665,11 +675,13 @@ export function TimePickerField({
   value,
   onChange,
   error,
+  required,
 }: {
   label: string;
   value?: string;
   onChange: (value: string) => void;
   error?: string;
+  required?: boolean;
 }) {
   const [open, setOpen] = useState(false);
   const isWeb = Platform.OS === 'web';
@@ -727,7 +739,7 @@ export function TimePickerField({
   if (isWeb) {
     return (
       <View style={styles.field}>
-        <Text style={styles.label}>{label}</Text>
+        <Text style={styles.label}>{label}{required ? <Text style={styles.required}> *</Text> : null}</Text>
         {trigger}
         {open ? (
           <View style={styles.webDatePanel}>
@@ -742,7 +754,7 @@ export function TimePickerField({
 
   return (
     <View style={styles.field}>
-      <Text style={styles.label}>{label}</Text>
+      <Text style={styles.label}>{label}{required ? <Text style={styles.required}> *</Text> : null}</Text>
       {trigger}
       {error ? <Text style={styles.errorText}>{error}</Text> : null}
       <Modal visible={open} transparent animationType="slide" onRequestClose={() => setOpen(false)}>
@@ -996,6 +1008,10 @@ const styles = StyleSheet.create({
     alignSelf: 'center',
     gap: spacing.lg,
     paddingBottom: spacing.xxxl,
+  },
+  screenContentDesktop: {
+    maxWidth: 1400,
+    alignSelf: 'stretch',
   },
   screenPadded: {
     paddingHorizontal: layout.screenPadding,

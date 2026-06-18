@@ -347,6 +347,7 @@ export function RequestFormScreen() {
                       label={field.label}
                       value={value}
                       onChange={onChange}
+                      required={field.required}
                       options={
                         nikDisabledThisForm && field.name === 'jenisPengajuan'
                           ? field.options.filter((opt) => opt.value === 'KTP Baru')
@@ -359,6 +360,7 @@ export function RequestFormScreen() {
                       label={field.label}
                       value={value}
                       onChange={onChange}
+                      required={field.required}
                       error={errors[field.name]?.message as string | undefined}
                     />
                   ) : field.type === 'time' ? (
@@ -366,6 +368,7 @@ export function RequestFormScreen() {
                       label={field.label}
                       value={value}
                       onChange={onChange}
+                      required={field.required}
                       error={errors[field.name]?.message as string | undefined}
                     />
                   ) : (
@@ -373,6 +376,7 @@ export function RequestFormScreen() {
                       label={nikDisabledThisForm && field.name === 'nik' ? 'NIK (belum tersedia)' : field.label}
                       value={value}
                       onChangeText={onChange}
+                      required={field.required}
                       placeholder={field.placeholder}
                       keyboardType={keyboardType(field)}
                       multiline={field.type === 'textarea'}
