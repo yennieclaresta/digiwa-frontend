@@ -121,6 +121,10 @@ export const styles = StyleSheet.create({
     color: colors.textPrimary,
     fontSize: typography.body,
   },
+  inputFocus: {
+    borderColor: colors.info,
+    borderWidth: 1,
+  },
   textarea: {
     minHeight: 96,
     paddingTop: spacing.md,
@@ -139,6 +143,10 @@ export const styles = StyleSheet.create({
   },
   inputWrapperError: {
     borderColor: colors.danger,
+  },
+  inputWrapperFocus: {
+    borderColor: colors.info,
+    borderWidth: 1,
   },
   inputInner: {
     flex: 1,

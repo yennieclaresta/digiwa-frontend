@@ -22,11 +22,11 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Svg, { Circle, Ellipse, G, Line, Path, Polygon, Polyline, Rect } from 'react-native-svg';
 
-import { colors, layout, radius, shadows, spacing, statusTheme, typography } from '@/constants/theme';
+import { colors, statusTheme } from '@/constants/theme';
 
-import { styles } from './digiwa.styles';
 import type { CitizenRequest, RequestStatus, UploadedFile } from '@/types';
 import { formatDate, serviceLabel } from '@/utils/format';
+import { styles } from './digiwa.styles';
 
 type IconProps = {
   icon: IconType;
@@ -99,14 +99,24 @@ export function ReactIcon({ icon, size = 22, color = colors.textPrimary, strokeW
   const attr = element.props?.attr ?? {};
   const iconStrokeWidth = strokeWidth ?? Number(attr.strokeWidth ?? 2);
   const children = element.props?.children;
+  const hasFillAttr = Object.prototype.hasOwnProperty.call(attr, 'fill');
+  const hasStrokeAttr = Object.prototype.hasOwnProperty.call(attr, 'stroke');
+  const svgFill = hasFillAttr
+    ? ((resolveSvgValue(attr.fill, color) as string) ?? color)
+    : hasStrokeAttr
+      ? 'none'
+      : color;
+  const svgStroke = hasStrokeAttr
+    ? ((resolveSvgValue(attr.stroke, color) as string) ?? color)
+    : 'none';
 
   return (
     <Svg
       width={size}
       height={size}
       viewBox={(attr.viewBox as string) ?? '0 0 24 24'}
-      fill={(resolveSvgValue(attr.fill ?? 'none', color) as string) ?? 'none'}
-      stroke={(resolveSvgValue(attr.stroke ?? 'currentColor', color) as string) ?? color}
+      fill={svgFill}
+      stroke={svgStroke}
       strokeWidth={iconStrokeWidth}
       strokeLinecap={(attr.strokeLinecap as 'round' | 'butt' | 'square' | undefined) ?? 'round'}
       strokeLinejoin={(attr.strokeLinejoin as 'round' | 'miter' | 'bevel' | undefined) ?? 'round'}
@@ -259,16 +269,19 @@ export function TextInputField({
   required?: boolean;
 }) {
   const [showPassword, setShowPassword] = useState(false);
+  const [focused, setFocused] = useState(false);
 
   return (
     <View style={styles.field}>
       <Text style={styles.label}>{label}{required ? <Text style={styles.required}> *</Text> : null}</Text>
       {secureTextEntry ? (
-        <View style={[styles.inputWrapper, error ? styles.inputWrapperError : undefined]}>
+        <View style={[styles.inputWrapper, error ? styles.inputWrapperError : undefined, focused && styles.inputWrapperFocus]}>
           <TextInput
             placeholderTextColor={colors.neutral}
             style={styles.inputInner}
             secureTextEntry={!showPassword}
+            onFocus={() => setFocused(true)}
+            onBlur={() => setFocused(false)}
             {...props}
             value={value ?? ''}
           />
@@ -285,7 +298,9 @@ export function TextInputField({
           placeholderTextColor={colors.neutral}
           multiline={multiline}
           textAlignVertical={multiline ? 'top' : 'center'}
-          style={[styles.input, multiline && styles.textarea, error && styles.inputError]}
+          style={[styles.input, multiline && styles.textarea, error && styles.inputError, focused && styles.inputFocus]}
+          onFocus={() => setFocused(true)}
+          onBlur={() => setFocused(false)}
           {...props}
           value={value ?? ''}
         />

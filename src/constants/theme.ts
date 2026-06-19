@@ -14,7 +14,7 @@ export const colors = {
   textPrimary: '#102033',
   textSecondary: '#5C6B7A',
   textInverse: '#FFFFFF',
-  border: '#D8E2EA',
+  border: '#C7DDFB',
   success: '#1E9E5A',
   successSoft: '#E6F7EE',
   warning: '#F0A51A',
