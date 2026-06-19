@@ -11,8 +11,9 @@ RUN npm ci
 
 COPY . .
 
-RUN test -n "$EXPO_PUBLIC_API_BASE_URL"
-RUN npx expo export --platform web
+RUN export EXPO_PUBLIC_API_BASE_URL="${EXPO_PUBLIC_API_BASE_URL:-https://digiwa-backend-1034235894897.asia-southeast2.run.app}" \
+ && test -n "$EXPO_PUBLIC_API_BASE_URL" \
+ && npx expo export --platform web
 
 # Stage 2: Serve with nginx
 FROM nginx:alpine
