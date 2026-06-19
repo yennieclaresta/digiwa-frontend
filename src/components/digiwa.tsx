@@ -36,6 +36,12 @@ type IconProps = {
   style?: StyleProp<ViewStyle>;
 };
 
+const hiddenScrollIndicatorProps = {
+  showsVerticalScrollIndicator: false,
+  showsHorizontalScrollIndicator: false,
+  persistentScrollbar: false,
+} as const;
+
 function resolveSvgValue(value: unknown, color: string) {
   return value === 'currentColor' ? color : value;
 }
@@ -138,7 +144,11 @@ export function Screen({
         style={styles.keyboardView}
       >
         {scroll ? (
-          <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={contentStyle}>
+          <ScrollView
+            keyboardShouldPersistTaps="handled"
+            contentContainerStyle={contentStyle}
+            {...hiddenScrollIndicatorProps}
+          >
             {children}
           </ScrollView>
         ) : (
@@ -342,7 +352,12 @@ export function SelectField({
         </Pressable>
         {open ? (
           <View style={styles.webInlineOptions}>
-            <ScrollView style={{ maxHeight: 240 }} keyboardShouldPersistTaps="handled" nestedScrollEnabled>
+            <ScrollView
+              style={{ maxHeight: 240 }}
+              keyboardShouldPersistTaps="handled"
+              nestedScrollEnabled
+              {...hiddenScrollIndicatorProps}
+            >
               {options.map((option) => (
                 <Pressable
                   key={option.value}
@@ -373,7 +388,7 @@ export function SelectField({
           <Pressable style={styles.bottomSheet} onPress={() => { }}>
             <View style={styles.bottomSheetHandle} />
             <Text style={styles.bottomSheetTitle}>{label}</Text>
-            <ScrollView keyboardShouldPersistTaps="handled">
+            <ScrollView keyboardShouldPersistTaps="handled" {...hiddenScrollIndicatorProps}>
               {options.map((option) => (
                 <Pressable
                   key={option.value}
@@ -640,7 +655,9 @@ export function DatePickerField({
           <Pressable style={styles.calendarSheet} onPress={() => { }}>
             <View style={styles.bottomSheetHandle} />
             <Text style={styles.bottomSheetTitle}>{label}</Text>
-            <ScrollView keyboardShouldPersistTaps="handled">{calendar}</ScrollView>
+            <ScrollView keyboardShouldPersistTaps="handled" {...hiddenScrollIndicatorProps}>
+              {calendar}
+            </ScrollView>
           </Pressable>
         </Pressable>
       </Modal>
@@ -994,4 +1011,3 @@ export function CheckRow({
     </View>
   );
 }
-

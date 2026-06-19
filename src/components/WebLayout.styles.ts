@@ -1,4 +1,4 @@
-import { Platform, StyleSheet } from 'react-native';
+import { StyleSheet } from 'react-native';
 
 import { colors, radius, shadows, spacing, typography } from '@/constants/theme';
 
@@ -22,6 +22,7 @@ export const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: colors.border,
     gap: spacing.xs,
+    alignItems: 'center',
   },
   sidebarLogoImage: {
     width: 48,
