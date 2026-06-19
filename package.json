@@ -1,5 +1,5 @@
 {
-  "name": "client-digiwa-claresta",
+  "name": "digiwa-frontend",
   "main": "expo-router/entry",
   "version": "1.0.0",
   "dependencies": {
