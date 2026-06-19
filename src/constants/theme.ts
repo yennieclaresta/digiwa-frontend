@@ -72,12 +72,12 @@ export const shadows = {
     android: {
       elevation: 3,
     },
+    web: {
+      boxShadow: `0 8px 18px ${colors.shadow}`,
+    } as any,
     default: {
-      shadowColor: colors.shadow,
-      shadowOffset: { width: 0, height: 8 },
-      shadowOpacity: 1,
-      shadowRadius: 18,
-    },
+      boxShadow: `0 8px 18px ${colors.shadow}`,
+    } as any,
   }),
   subtle: Platform.select({
     ios: {
@@ -89,12 +89,12 @@ export const shadows = {
     android: {
       elevation: 1,
     },
+    web: {
+      boxShadow: `0 3px 8px ${colors.shadow}`,
+    } as any,
     default: {
-      shadowColor: colors.shadow,
-      shadowOffset: { width: 0, height: 3 },
-      shadowOpacity: 1,
-      shadowRadius: 8,
-    },
+      boxShadow: `0 3px 8px ${colors.shadow}`,
+    } as any,
   }),
 } as const;
 
