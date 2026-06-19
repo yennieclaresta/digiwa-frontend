@@ -20,6 +20,7 @@ import {
 import {
   AppHeader,
   DashboardStatCard,
+  DatePickerField,
   EmptyState,
   PrimaryButton,
   ReactIcon,
@@ -32,7 +33,7 @@ import {
   TextInputField,
 } from '@/components/digiwa';
 import { serviceIcons, serviceOptions, services, statusOptions } from '@/constants/services';
-import { colors, radius, spacing, typography } from '@/constants/theme';
+import { colors } from '@/constants/theme';
 import { useApp } from '@/context/AppContext';
 import type { RequestStatus, ServiceType } from '@/types';
 import { formatDateTime, serviceLabel, sortByNewest } from '@/utils/format';
@@ -150,7 +151,7 @@ export function AdminRequestManagementScreen() {
         />
         <View style={styles.inlineFields}>
           <View style={styles.inlineField}>
-            <TextInputField label="Tanggal" value={date} onChangeText={setDate} placeholder="YYYY-MM-DD" />
+            <DatePickerField label="Tanggal" value={date} onChange={setDate} />
           </View>
           <View style={styles.inlineField}>
             <TextInputField label="RT/RW" value={rtRw} onChangeText={setRtRw} placeholder="03/05" />
