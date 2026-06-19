@@ -50,7 +50,7 @@ async function apiRequest<T>(path: string, options: RequestOptions = {}) {
 }
 
 export function getApiBaseUrl() {
-  return baseUrl();
+  return API_BASE_URL;
 }
 
 export function login(identifier: string, password: string) {

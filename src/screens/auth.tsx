@@ -21,7 +21,7 @@ import {
   Screen,
   TextInputField,
 } from '@/components/digiwa';
-import { colors, radius, spacing, typography } from '@/constants/theme';
+import { colors } from '@/constants/theme';
 import { useApp } from '@/context/AppContext';
 import { getApiBaseUrl } from '@/services/api';
 
@@ -107,6 +107,7 @@ export function LoginScreen() {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const apiBaseUrl = getApiBaseUrl();
+  const apiConfigured = Boolean(apiBaseUrl);
   const {
     control,
     handleSubmit,
@@ -120,6 +121,10 @@ export function LoginScreen() {
 
   async function onSubmit(values: LoginForm) {
     setError('');
+    if (!apiConfigured) {
+      setError('Konfigurasi server belum diatur. Hubungi admin aplikasi.');
+      return;
+    }
     setLoading(true);
     try {
       const user = await login({
@@ -146,7 +151,12 @@ export function LoginScreen() {
 
       <AppHeader title="Masuk" subtitle="Akun petugas menggunakan email @digiwa.id. Warga dapat login dengan email atau NIK." />
 
-      {__DEV__ ? (
+      {!apiConfigured ? (
+        <InfoBox>
+          Konfigurasi server belum diatur. Set `EXPO_PUBLIC_API_BASE_URL` saat build Expo web agar halaman login
+          bisa terhubung ke backend.
+        </InfoBox>
+      ) : __DEV__ ? (
         <InfoBox>
           {`Mode debug. Aplikasi ini sedang mengarah ke API: ${apiBaseUrl}. Jika baru mengubah .env, lakukan Reload penuh di Expo Go atau jalankan ulang Metro.`}
         </InfoBox>
@@ -183,7 +193,13 @@ export function LoginScreen() {
           )}
         />
         {error ? <Text style={styles.error}>{error}</Text> : null}
-        <PrimaryButton title="Masuk" icon={FiLogIn} onPress={handleSubmit(onSubmit)} loading={loading} />
+        <PrimaryButton
+          title="Masuk"
+          icon={FiLogIn}
+          onPress={handleSubmit(onSubmit)}
+          loading={loading}
+          disabled={!apiConfigured}
+        />
       </View>
 
       <Pressable onPress={() => router.push('/register')} style={styles.authLink}>
