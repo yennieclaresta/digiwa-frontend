@@ -120,7 +120,6 @@ export function RequestFormScreen() {
     if (!currentUser?.nik) return;
     setValue('nik', currentUser.nik);
     setValue('nikPelapor', currentUser.nik);
-    setNikDisabledForKtp(false);
   }, [currentUser?.nik, setValue]);
 
   // Clear alasanKtpBaru when the user switches away from "KTP Baru"

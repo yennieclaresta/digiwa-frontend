@@ -27,6 +27,8 @@ function baseUrl() {
 async function apiRequest<T>(path: string, options: RequestOptions = {}) {
   const url = `${baseUrl()}${path}`;
   let response: Response;
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 12000);
   try {
     response = await fetch(url, {
       method: options.method ?? 'GET',
@@ -36,9 +38,13 @@ async function apiRequest<T>(path: string, options: RequestOptions = {}) {
         ...(options.token ? { Authorization: `Bearer ${options.token}` } : {}),
       },
       body: options.body ? JSON.stringify(options.body) : undefined,
+      signal: controller.signal,
     });
   } catch (error) {
-    throw new Error(toNetworkErrorMessage(error, url));
+    const isTimeout = error instanceof Error && error.name === 'AbortError';
+    throw new Error(isTimeout ? `Waktu koneksi habis. Coba lagi.` : toNetworkErrorMessage(error, url));
+  } finally {
+    clearTimeout(timeoutId);
   }
 
   const payload = (await response.json().catch(() => ({}))) as { error?: string };
