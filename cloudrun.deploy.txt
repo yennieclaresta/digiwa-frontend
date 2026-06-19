@@ -20,7 +20,7 @@ Step 3 - Deploy to Cloud Run
      --image $IMAGE \
      --platform managed \
      --region $REGION \
-     --set-env-vars EXPO_PUBLIC_API_URL=https://your-backend.com \
+     --set-env-vars EXPO_PUBLIC_API_BASE_URL=https://your-backend.com \
      --allow-unauthenticated \
      --port 8080 \
      --memory 2 Gi \
