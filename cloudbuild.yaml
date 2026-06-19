@@ -4,12 +4,18 @@ steps:
     args:
       - "build"
       - "--build-arg"
-      - "EXPO_PUBLIC_API_BASE_URL=${_EXPO_PUBLIC_API_BASE_URL}"
+      - "EXPO_PUBLIC_API_BASE_URL=${_EXPO_PUBLIC_API_BASE_URL:-https://digiwa-backend-1034235894897.asia-southeast2.run.app}"
       - "-t"
       - "${_IMAGE}"
       - "."
 
-  # Step 2: Deploy the new image to Cloud Run
+  # Step 2: Push the image before deploying it
+  - name: "gcr.io/cloud-builders/docker"
+    args:
+      - "push"
+      - "${_IMAGE}"
+
+  # Step 3: Deploy the new image to Cloud Run
   - name: "gcr.io/google.com/cloudsdktool/cloud-sdk"
     entrypoint: gcloud
     args:
@@ -34,8 +40,8 @@ steps:
       - "--max-instances"
       - "1"
 
-images:
-  - "${_IMAGE}"
+options:
+  dynamicSubstitutions: true
 
 substitutions:
   _IMAGE: "gcr.io/$PROJECT_ID/digiwa-frontend"
