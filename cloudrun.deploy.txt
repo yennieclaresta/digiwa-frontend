@@ -1,4 +1,4 @@
-﻿DIGIWA Front-End Server - Google Cloud Run Deployment Script
+DIGIWA Front-End Server - Google Cloud Run Deployment Script
 Fill in every <PLACEHOLDER> before running.
 
 Prerequisites (Run Once)
@@ -11,23 +11,29 @@ export PROJECT_ID=<YOUR_PROJECT_ID>
 export REGION=<YOUR_REGION>
 export SERVICE_NAME=digiwa-frontend
 export IMAGE=gcr.io/$PROJECT_ID/$SERVICE_NAME
+export EXPO_PUBLIC_API_BASE_URL=https://your-backend.com
 
-Step 2 - Build & Push Images
-gcloud builds submit --tag $IMAGE
+Step 2 - Build & Push Image
+gcloud builds submit \
+  --config cloudbuild.yaml \
+  --substitutions=_IMAGE=$IMAGE,_EXPO_PUBLIC_API_BASE_URL=$EXPO_PUBLIC_API_BASE_URL
 
 Step 3 - Deploy to Cloud Run
-   gcloud run deploy $SERVICE_NAME \
-     --image $IMAGE \
-     --platform managed \
-     --region $REGION \
-     --set-env-vars EXPO_PUBLIC_API_BASE_URL=https://your-backend.com \
-     --allow-unauthenticated \
-     --port 8080 \
-     --memory 2 Gi \
-     --cpu 1 \
-     --min-instances 0 \
-     --max-instances 1
+gcloud run deploy $SERVICE_NAME \
+  --image $IMAGE \
+  --platform managed \
+  --region $REGION \
+  --allow-unauthenticated \
+  --port 8080 \
+  --memory 2Gi \
+  --cpu 1 \
+  --min-instances 0 \
+  --max-instances 1
 
 Step 4 - Verify
 gcloud run services describe $SERVICE_NAME --region $REGION
 gcloud run services list --platform managed
+
+Important
+- Expo web static export reads EXPO_PUBLIC_* values at build time, not at Cloud Run runtime.
+- Keep using EXPO_PUBLIC_API_BASE_URL. That is the env name read by the app and passed into the Docker build.

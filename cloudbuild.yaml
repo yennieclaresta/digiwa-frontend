@@ -1,0 +1,16 @@
+steps:
+  - name: "gcr.io/cloud-builders/docker"
+    args:
+      - "build"
+      - "--build-arg"
+      - "EXPO_PUBLIC_API_BASE_URL=${_EXPO_PUBLIC_API_BASE_URL}"
+      - "-t"
+      - "${_IMAGE}"
+      - "."
+
+images:
+  - "${_IMAGE}"
+
+substitutions:
+  _IMAGE: "gcr.io/$PROJECT_ID/digiwa-frontend"
+  _EXPO_PUBLIC_API_BASE_URL: "https://digiwa-backend-1034235894897.asia-southeast2.run.app"
