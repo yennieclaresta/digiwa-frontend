@@ -1,10 +1,11 @@
 import { useRouter } from 'expo-router';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Controller, useForm, useWatch } from 'react-hook-form';
 import { FiLogIn, FiUserPlus } from 'react-icons/fi';
 import {
   ActivityIndicator,
   Image,
+  Platform,
   Pressable,
   Text,
   View,
@@ -51,22 +52,39 @@ const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 export function SplashScreen() {
   const router = useRouter();
   const { currentUser, sessionLoading } = useApp();
+  const [navigationReady, setNavigationReady] = useState(false);
+  const navigationAttemptRef = useRef(false);
 
   useEffect(() => {
-    if (sessionLoading) {
+    if (sessionLoading || navigationReady) {
       return;
     }
 
-    const timer = setTimeout(() => {
-      if (!currentUser) {
-        router.replace('/login');
+    const isWeb = Platform.OS === 'web';
+    const delay = isWeb ? 1500 : 900;
+
+    const timer = setTimeout(async () => {
+      if (navigationAttemptRef.current) {
         return;
       }
-      router.replace((currentUser.role === 'admin' ? '/(admin)' : '/(warga)') as never);
-    }, 900);
+
+      navigationAttemptRef.current = true;
+      setNavigationReady(true);
+
+      try {
+        if (!currentUser) {
+          router.replace('/login');
+          return;
+        }
+        router.replace((currentUser.role === 'admin' ? '/(admin)' : '/(warga)') as never);
+      } catch (error) {
+        console.error('Navigation error:', error);
+        router.replace('/login');
+      }
+    }, delay);
 
     return () => clearTimeout(timer);
-  }, [currentUser, router, sessionLoading]);
+  }, [currentUser, router, sessionLoading, navigationReady]);
 
   return (
     <Screen scroll={false}>
