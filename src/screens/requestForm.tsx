@@ -284,8 +284,8 @@ export function RequestFormScreen() {
       const request = await submitRequest(activeConfig.type, getValues(), Object.values(uploadedFiles));
       setModalVisible(false);
       router.replace({ pathname: '/success', params: { requestId: request.id } });
-    } catch {
-      Alert.alert('Gagal menyimpan data. Silakan coba lagi.');
+    } catch (caught) {
+      Alert.alert(caught instanceof Error ? caught.message : 'Gagal menyimpan data. Silakan coba lagi.');
     } finally {
       setSubmitting(false);
     }
