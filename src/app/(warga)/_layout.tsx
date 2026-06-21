@@ -27,7 +27,7 @@ export default function WargaTabsLayout() {
           screenOptions={{
             headerShown: false,
             sceneStyle: {
-              backgroundColor: colors.background,
+              backgroundColor: colors.primaryLight,
             },
             tabBarActiveTintColor: colors.primary,
             tabBarInactiveTintColor: colors.neutral,
