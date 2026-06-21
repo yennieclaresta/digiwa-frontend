@@ -67,7 +67,11 @@ export async function uploadFilesToCloudinary(
     }
 
     if (!ok || !payload?.secure_url) {
-      throw new Error('Upload dokumen gagal. Periksa konfigurasi Cloudinary.');
+      throw new Error(
+        payload && typeof payload === 'object' && 'error' in payload
+          ? `Upload dokumen gagal. ${String((payload as { error?: unknown }).error || 'Periksa konfigurasi Cloudinary.')}`
+          : 'Upload dokumen gagal. Periksa konfigurasi Cloudinary.',
+      );
     }
 
     uploaded.push({

@@ -38,7 +38,7 @@ export const styles = StyleSheet.create({
     gap: spacing.md,
   },
   serviceMiniCard: {
-    flex: 1,
+    width: '48%',
     minWidth: 140,
     minHeight: 128,
     backgroundColor: colors.surface,
@@ -47,7 +47,8 @@ export const styles = StyleSheet.create({
     borderColor: colors.border,
     padding: spacing.lg,
     gap: spacing.md,
-    justifyContent: 'space-between',
+    justifyContent: 'flex-start',
+    alignItems: 'flex-start',
   },
   serviceMiniIcon: {
     width: 42,
@@ -58,9 +59,11 @@ export const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   serviceMiniTitle: {
+    width: '100%',
     color: colors.textPrimary,
     fontWeight: '900',
     lineHeight: 20,
+    textAlign: 'left',
   },
   latestCard: {
     backgroundColor: colors.surface,

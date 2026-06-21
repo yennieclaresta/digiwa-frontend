@@ -73,7 +73,9 @@ export function WargaHomeScreen() {
             <View style={styles.serviceMiniIcon}>
               <ReactIcon icon={serviceIcons[service.type]} color={colors.primary} size={22} />
             </View>
-            <Text style={styles.serviceMiniTitle}>{service.shortTitle}</Text>
+            <Text style={styles.serviceMiniTitle} numberOfLines={2}>
+              {service.shortTitle}
+            </Text>
           </Pressable>
         ))}
       </View>
@@ -258,7 +260,7 @@ const faqItems = [
   {
     question: 'Berapa lama proses pengajuan?',
     answer:
-      'KTP: 3–7 hari kerja setelah berkas lengkap. Akta Kelahiran & Kematian: 3–5 hari kerja. Surat RT/RW: 1–2 hari kerja. Durasi dapat berubah tergantung kelengkapan dokumen dan antrean.',
+      'KTP: 3–7 hari kerja setelah berkas lengkap. Akta Kelahiran & Kematian: 3–5 hari kerja. Surat Pengantar RT/RW: 1–2 hari kerja. Durasi dapat berubah tergantung kelengkapan dokumen dan antrean.',
   },
   {
     question: 'Jam Kerja Petugas (Jam Operasional)',

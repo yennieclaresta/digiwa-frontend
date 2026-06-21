@@ -39,6 +39,24 @@ import { useApp } from '@/context/AppContext';
 import type { RequestStatus, ServiceType } from '@/types';
 import { formatDateTime, serviceLabel, sortByNewest } from '@/utils/format';
 
+function resolveDocumentUrl(url: string): string {
+  if (url.includes('res.cloudinary.com') && url.includes('/image/upload/')) {
+    const lc = url.toLowerCase();
+    if (lc.endsWith('.pdf') || lc.includes('surat') || lc.includes('akta') || lc.includes('mock-')) {
+      url = url.replace('/image/upload/', '/raw/upload/');
+    }
+  }
+  if (url.includes('res.cloudinary.com') && url.includes('/raw/upload/')) {
+    const lc = url.toLowerCase();
+    const tail = url.split('/raw/upload/')[1] || '';
+    const lastSegment = tail.split('/').pop() || '';
+    if ((lc.includes('surat') || lc.includes('akta') || lc.includes('mock-')) && !lastSegment.includes('.')) {
+      return `${url}.pdf`;
+    }
+  }
+  return url;
+}
+
 export function AdminDashboardScreen() {
   const router = useRouter();
   const { requests, activities } = useApp();
@@ -211,7 +229,7 @@ export function AdminPrintScreen() {
     }
     try {
       const document = request.generatedDocuments[0] ?? (await generateDocument(requestId));
-      await Linking.openURL(document.publicUrl || document.downloadUrl || '');
+      await Linking.openURL(resolveDocumentUrl(document.publicUrl || document.downloadUrl || ''));
     } catch (caught) {
       Alert.alert(caught instanceof Error ? caught.message : 'Gagal menyimpan data. Silakan coba lagi.');
     }

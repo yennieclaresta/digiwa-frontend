@@ -50,7 +50,7 @@ export const serviceOptions = [
   { label: 'KTP', value: 'ktp' },
   { label: 'Akta Kelahiran', value: 'akta_kelahiran' },
   { label: 'Akta Kematian', value: 'akta_kematian' },
-  { label: 'Surat RT/RW', value: 'surat_rt_rw' },
+  { label: 'Surat Pengantar RT/RW', value: 'surat_rt_rw' },
 ] as const;
 
 const genderOptions = [
@@ -325,10 +325,10 @@ export const services: ServiceConfig[] = [
   {
     type: 'surat_rt_rw',
     shortTitle: 'Surat Pengantar RT/RW',
-    title: 'Surat Permohonan RT/RW',
+    title: 'Permohonan Surat Pengantar RT/RW',
     description: 'Buat surat pengantar atau keterangan untuk berbagai kebutuhan warga.',
     requiredDocuments: ['KTP', 'Kartu Keluarga', 'Dokumen pendukung jika ada'],
-    formTitle: 'Form Surat RT/RW',
+    formTitle: 'Form Surat Pengantar RT/RW',
     sections: [
       {
         id: 'data-pemohon',

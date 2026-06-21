@@ -416,7 +416,7 @@ export function FileUploadField({
         type: asset.mimeType ?? 'application/octet-stream',
         size: asset.size ?? 0,
         uploadedAt: new Date().toISOString(),
-        // On Expo Web, asset.file is the native File object needed for proper multipart upload
+        // On Expo Web, asset.file is the native File object needed for proper multipart upload.
         file: (asset as { file?: File }).file,
       });
     } finally {
@@ -588,7 +588,6 @@ export function DatePickerField({
   required?: boolean;
 }) {
   const [open, setOpen] = useState(false);
-  const isWeb = Platform.OS === 'web';
 
   const [cal, setCal] = useState(() => {
     const parsed = value?.match(/^(\d{4})-(\d{2})-(\d{2})$/);
@@ -643,33 +642,12 @@ export function DatePickerField({
     />
   );
 
-  if (isWeb) {
-    return (
-      <View style={styles.field}>
-        <Text style={styles.label}>{label}{required ? <Text style={styles.required}> *</Text> : null}</Text>
-        {trigger}
-        {open ? <View style={styles.webDatePanel}>{calendar}</View> : null}
-        {error ? <Text style={styles.errorText}>{error}</Text> : null}
-      </View>
-    );
-  }
-
   return (
     <View style={styles.field}>
       <Text style={styles.label}>{label}{required ? <Text style={styles.required}> *</Text> : null}</Text>
       {trigger}
+      {open ? <View style={styles.webDatePanel}>{calendar}</View> : null}
       {error ? <Text style={styles.errorText}>{error}</Text> : null}
-      <Modal visible={open} transparent statusBarTranslucent animationType="slide" onRequestClose={() => setOpen(false)}>
-        <Pressable style={styles.sheetOverlay} onPress={() => setOpen(false)}>
-          <Pressable style={styles.calendarSheet} onPress={() => { }}>
-            <View style={styles.bottomSheetHandle} />
-            <Text style={styles.bottomSheetTitle}>{label}</Text>
-            <ScrollView keyboardShouldPersistTaps="handled" {...hiddenScrollIndicatorProps}>
-              {calendar}
-            </ScrollView>
-          </Pressable>
-        </Pressable>
-      </Modal>
     </View>
   );
 }
@@ -711,7 +689,6 @@ export function TimePickerField({
   required?: boolean;
 }) {
   const [open, setOpen] = useState(false);
-  const isWeb = Platform.OS === 'web';
 
   const [time, setTime] = useState(() => {
     const parsed = value?.match(/^(\d{1,2}):(\d{2})$/);
@@ -763,37 +740,17 @@ export function TimePickerField({
     </Pressable>
   );
 
-  if (isWeb) {
-    return (
-      <View style={styles.field}>
-        <Text style={styles.label}>{label}{required ? <Text style={styles.required}> *</Text> : null}</Text>
-        {trigger}
-        {open ? (
-          <View style={styles.webDatePanel}>
-            {picker}
-            {confirmBtn}
-          </View>
-        ) : null}
-        {error ? <Text style={styles.errorText}>{error}</Text> : null}
-      </View>
-    );
-  }
-
   return (
     <View style={styles.field}>
       <Text style={styles.label}>{label}{required ? <Text style={styles.required}> *</Text> : null}</Text>
       {trigger}
+      {open ? (
+        <View style={styles.webDatePanel}>
+          {picker}
+          {confirmBtn}
+        </View>
+      ) : null}
       {error ? <Text style={styles.errorText}>{error}</Text> : null}
-      <Modal visible={open} transparent statusBarTranslucent animationType="slide" onRequestClose={() => setOpen(false)}>
-        <Pressable style={styles.sheetOverlay} onPress={() => setOpen(false)}>
-          <Pressable style={styles.timePickerSheet} onPress={() => { }}>
-            <View style={styles.bottomSheetHandle} />
-            <Text style={styles.bottomSheetTitle}>{label}</Text>
-            {picker}
-            {confirmBtn}
-          </Pressable>
-        </Pressable>
-      </Modal>
     </View>
   );
 }
