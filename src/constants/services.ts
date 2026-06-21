@@ -88,12 +88,14 @@ export const services: ServiceConfig[] = [
           { name: 'tanggalLahir', label: 'Tanggal Lahir', required: true, validation: 'date', type: 'date' },
           { name: 'jenisKelamin', label: 'Jenis Kelamin', required: true, type: 'select', options: genderOptions },
           { name: 'agama', label: 'Agama', required: true },
-          { name: 'statusPerkawinan', label: 'Status Perkawinan', required: true, type: 'select', options: [
-            { label: 'Belum Kawin', value: 'Belum Kawin' },
-            { label: 'Kawin', value: 'Kawin' },
-            { label: 'Cerai Hidup', value: 'Cerai Hidup' },
-            { label: 'Cerai Mati', value: 'Cerai Mati' },
-          ] },
+          {
+            name: 'statusPerkawinan', label: 'Status Perkawinan', required: true, type: 'select', options: [
+              { label: 'Belum Kawin', value: 'Belum Kawin' },
+              { label: 'Kawin', value: 'Kawin' },
+              { label: 'Cerai Hidup', value: 'Cerai Hidup' },
+              { label: 'Cerai Mati', value: 'Cerai Mati' },
+            ]
+          },
           { name: 'pekerjaan', label: 'Pekerjaan', required: true },
           { name: 'kewarganegaraan', label: 'Kewarganegaraan', required: true },
           { name: 'alamatLengkap', label: 'Alamat Lengkap', required: true, type: 'textarea' },
@@ -109,13 +111,15 @@ export const services: ServiceConfig[] = [
         id: 'jenis-pengajuan',
         title: 'Jenis Pengajuan',
         fields: [
-          { name: 'jenisPengajuan', label: 'Jenis Pengajuan', required: true, type: 'select', options: [
-            { label: 'KTP Baru', value: 'KTP Baru' },
-            { label: 'Perubahan Data', value: 'Perubahan Data' },
-            { label: 'KTP Hilang', value: 'KTP Hilang' },
-            { label: 'KTP Rusak', value: 'KTP Rusak' },
-            { label: 'Cetak Ulang', value: 'Cetak Ulang' },
-          ] },
+          {
+            name: 'jenisPengajuan', label: 'Jenis Pengajuan', required: true, type: 'select', options: [
+              { label: 'KTP Baru', value: 'KTP Baru' },
+              { label: 'Perubahan Data', value: 'Perubahan Data' },
+              { label: 'KTP Hilang', value: 'KTP Hilang' },
+              { label: 'KTP Rusak', value: 'KTP Rusak' },
+              { label: 'Cetak Ulang', value: 'Cetak Ulang' },
+            ]
+          },
           {
             name: 'alasanKtpBaru',
             label: 'Jenis Permohonan KTP Baru',
@@ -189,12 +193,14 @@ export const services: ServiceConfig[] = [
           { name: 'tanggalLahirAnak', label: 'Tanggal Lahir', required: true, validation: 'date', type: 'date' },
           { name: 'waktuLahir', label: 'Waktu Lahir', required: true, type: 'time' },
           { name: 'anakKe', label: 'Anak Ke', required: true, type: 'number' },
-          { name: 'tempatDilahirkan', label: 'Tempat Dilahirkan', required: true, type: 'select', options: [
-            { label: 'Rumah Sakit', value: 'Rumah Sakit' },
-            { label: 'Klinik', value: 'Klinik' },
-            { label: 'Rumah', value: 'Rumah' },
-            { label: 'Lainnya', value: 'Lainnya' },
-          ] },
+          {
+            name: 'tempatDilahirkan', label: 'Tempat Dilahirkan', required: true, type: 'select', options: [
+              { label: 'Rumah Sakit', value: 'Rumah Sakit' },
+              { label: 'Klinik', value: 'Klinik' },
+              { label: 'Rumah', value: 'Rumah' },
+              { label: 'Lainnya', value: 'Lainnya' },
+            ]
+          },
         ],
       },
       {
@@ -269,12 +275,14 @@ export const services: ServiceConfig[] = [
           { name: 'tempatLahir', label: 'Tempat Lahir', required: true },
           { name: 'tanggalLahir', label: 'Tanggal Lahir', required: true, validation: 'date', type: 'date' },
           { name: 'agama', label: 'Agama', required: true },
-          { name: 'statusPerkawinan', label: 'Status Perkawinan', required: true, type: 'select', options: [
-            { label: 'Belum Kawin', value: 'Belum Kawin' },
-            { label: 'Kawin', value: 'Kawin' },
-            { label: 'Cerai Hidup', value: 'Cerai Hidup' },
-            { label: 'Cerai Mati', value: 'Cerai Mati' },
-          ] },
+          {
+            name: 'statusPerkawinan', label: 'Status Perkawinan', required: true, type: 'select', options: [
+              { label: 'Belum Kawin', value: 'Belum Kawin' },
+              { label: 'Kawin', value: 'Kawin' },
+              { label: 'Cerai Hidup', value: 'Cerai Hidup' },
+              { label: 'Cerai Mati', value: 'Cerai Mati' },
+            ]
+          },
           { name: 'pekerjaan', label: 'Pekerjaan', required: true },
           { name: 'alamatTerakhir', label: 'Alamat Terakhir', required: true, type: 'textarea' },
         ],
@@ -339,17 +347,19 @@ export const services: ServiceConfig[] = [
         id: 'jenis-surat',
         title: 'Jenis Surat',
         fields: [
-          { name: 'jenisSurat', label: 'Jenis Surat', required: true, type: 'select', options: [
-            { label: 'Surat Pengantar KTP', value: 'Surat Pengantar KTP' },
-            { label: 'Surat Pengantar KK', value: 'Surat Pengantar KK' },
-            { label: 'Surat Keterangan Domisili', value: 'Surat Keterangan Domisili' },
-            { label: 'Surat Keterangan Usaha', value: 'Surat Keterangan Usaha' },
-            { label: 'Surat Keterangan Tidak Mampu', value: 'Surat Keterangan Tidak Mampu' },
-            { label: 'Surat Pengantar Nikah', value: 'Surat Pengantar Nikah' },
-            { label: 'Surat Keterangan Kelahiran', value: 'Surat Keterangan Kelahiran' },
-            { label: 'Surat Keterangan Kematian', value: 'Surat Keterangan Kematian' },
-            { label: 'Lainnya', value: 'Lainnya' },
-          ] },
+          {
+            name: 'jenisSurat', label: 'Jenis Surat', required: true, type: 'select', options: [
+              { label: 'Surat Pengantar KTP', value: 'Surat Pengantar KTP' },
+              { label: 'Surat Pengantar KK', value: 'Surat Pengantar KK' },
+              { label: 'Surat Keterangan Domisili', value: 'Surat Keterangan Domisili' },
+              { label: 'Surat Keterangan Usaha', value: 'Surat Keterangan Usaha' },
+              { label: 'Surat Keterangan Tidak Mampu', value: 'Surat Keterangan Tidak Mampu' },
+              { label: 'Surat Pengantar Nikah', value: 'Surat Pengantar Nikah' },
+              { label: 'Surat Keterangan Kelahiran', value: 'Surat Keterangan Kelahiran' },
+              { label: 'Surat Keterangan Kematian', value: 'Surat Keterangan Kematian' },
+              { label: 'Lainnya', value: 'Lainnya' },
+            ]
+          },
         ],
       },
       {

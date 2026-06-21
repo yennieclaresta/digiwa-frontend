@@ -20,7 +20,7 @@ import {
   TextInputField,
 } from '@/components/digiwa';
 import { serviceIcons, statusOptions } from '@/constants/services';
-import { colors, radius, spacing, typography } from '@/constants/theme';
+import { colors } from '@/constants/theme';
 import { useApp } from '@/context/AppContext';
 import type { CitizenRequest, GeneratedDocument, RequestStatus, UploadedFile } from '@/types';
 import { formatDateTime, humanizeKey, serviceLabel } from '@/utils/format';
@@ -224,9 +224,9 @@ function AdminRequestDetailContent({
     setRequest((previous) =>
       previous
         ? {
-            ...previous,
-            generatedDocuments: [document, ...previous.generatedDocuments],
-          }
+          ...previous,
+          generatedDocuments: [document, ...previous.generatedDocuments],
+        }
         : previous,
     );
     return document;

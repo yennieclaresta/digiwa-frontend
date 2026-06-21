@@ -34,34 +34,34 @@ export default function AdminTabsLayout() {
             tabBarButton: isDesktop
               ? () => null
               : ({ children, android_ripple, ...props }: any) => (
-                  <PlatformPressable
-                    {...props}
-                    pressOpacity={1}
-                    pressColor="transparent"
-                    android_ripple={{
-                      ...(android_ripple ?? {}),
-                      color: 'transparent',
-                      borderless: false,
-                      radius: 0,
-                    }}
-                  >
-                    {children}
-                  </PlatformPressable>
-                ),
+                <PlatformPressable
+                  {...props}
+                  pressOpacity={1}
+                  pressColor="transparent"
+                  android_ripple={{
+                    ...(android_ripple ?? {}),
+                    color: 'transparent',
+                    borderless: false,
+                    radius: 0,
+                  }}
+                >
+                  {children}
+                </PlatformPressable>
+              ),
             tabBarLabelStyle: { fontWeight: '800', fontSize: 11 },
             tabBarStyle: isDesktop
               ? { display: 'none' }
               : {
-                  backgroundColor: colors.primaryLight,
-                  borderTopWidth: 0,
-                  elevation: 0,
-                  shadowColor: 'transparent',
-                  shadowOpacity: 0,
-                  minHeight: 70,
-                  paddingTop: spacing.xs,
-                  borderTopLeftRadius: radius.lg,
-                  borderTopRightRadius: radius.lg,
-                },
+                backgroundColor: colors.primaryLight,
+                borderTopWidth: 0,
+                elevation: 0,
+                shadowColor: 'transparent',
+                shadowOpacity: 0,
+                minHeight: 70,
+                paddingTop: spacing.xs,
+                borderTopLeftRadius: radius.lg,
+                borderTopRightRadius: radius.lg,
+              },
           }}
         >
           <Tabs.Screen

@@ -2,6 +2,7 @@ import { useRouter } from 'expo-router';
 import { useEffect, useRef, useState } from 'react';
 import { Controller, useForm, useWatch } from 'react-hook-form';
 import { FiLogIn, FiUserPlus } from 'react-icons/fi';
+
 import {
   ActivityIndicator,
   Image,
@@ -21,6 +22,7 @@ import {
   Screen,
   TextInputField,
 } from '@/components/digiwa';
+
 import { colors } from '@/constants/theme';
 import { useApp } from '@/context/AppContext';
 import { getApiBaseUrl } from '@/services/api';

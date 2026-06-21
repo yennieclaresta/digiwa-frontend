@@ -329,97 +329,52 @@ export function SelectField({
 }) {
   const [open, setOpen] = useState(false);
   const selectedLabel = options.find((o) => o.value === value)?.label ?? '';
-  const isWeb = Platform.OS === 'web';
 
   function handleSelect(val: string) {
     onChange(val);
     setOpen(false);
   }
 
-  const trigger = (
-    <Pressable
-      onPress={() => setOpen((prev) => !prev)}
-      style={[styles.selectTrigger, error ? styles.inputError : undefined]}
-    >
-      <Text style={[styles.selectTriggerText, !value ? styles.selectPlaceholder : undefined]} numberOfLines={1}>
-        {selectedLabel || placeholder}
-      </Text>
-      <ReactIcon icon={FiChevronDown} size={16} color={colors.textSecondary} />
-    </Pressable>
-  );
-
-  if (isWeb) {
-    return (
-      <View style={styles.field}>
-        <Text style={styles.label}>{label}{required ? <Text style={styles.required}> *</Text> : null}</Text>
-        <Pressable
-          onPress={() => setOpen((prev) => !prev)}
-          style={[
-            styles.selectTrigger,
-            open ? styles.selectTriggerOpen : undefined,
-            error ? styles.inputError : undefined,
-          ]}
-        >
-          <Text style={[styles.selectTriggerText, !value ? styles.selectPlaceholder : undefined]} numberOfLines={1}>
-            {selectedLabel || placeholder}
-          </Text>
-          <ReactIcon icon={FiChevronDown} size={16} color={colors.textSecondary} />
-        </Pressable>
-        {open ? (
-          <View style={styles.webInlineOptions}>
-            <ScrollView
-              style={{ maxHeight: 240 }}
-              keyboardShouldPersistTaps="handled"
-              nestedScrollEnabled
-              {...hiddenScrollIndicatorProps}
-            >
-              {options.map((option) => (
-                <Pressable
-                  key={option.value}
-                  style={[styles.webOption, option.value === value ? styles.webOptionSelected : undefined]}
-                  onPress={() => handleSelect(option.value)}
-                >
-                  <Text style={[styles.webOptionText, option.value === value ? styles.webOptionTextSelected : undefined]}>
-                    {option.label}
-                  </Text>
-                  {option.value === value ? <ReactIcon icon={FiCheck} size={14} color={colors.primary} /> : null}
-                </Pressable>
-              ))}
-            </ScrollView>
-          </View>
-        ) : null}
-        {error ? <Text style={styles.errorText}>{error}</Text> : null}
-      </View>
-    );
-  }
-
   return (
-    <View style={styles.field}>
+    <View style={[styles.field, open ? styles.fieldDropdownOpen : undefined]}>
       <Text style={styles.label}>{label}{required ? <Text style={styles.required}> *</Text> : null}</Text>
-      {trigger}
+      <Pressable
+        onPress={() => setOpen((prev) => !prev)}
+        style={[
+          styles.selectTrigger,
+          open ? styles.selectTriggerOpen : undefined,
+          error ? styles.inputError : undefined,
+        ]}
+      >
+        <Text style={[styles.selectTriggerText, !value ? styles.selectPlaceholder : undefined]} numberOfLines={1}>
+          {selectedLabel || placeholder}
+        </Text>
+        <ReactIcon icon={open ? FiChevronUp : FiChevronDown} size={16} color={colors.textSecondary} />
+      </Pressable>
+      {open ? (
+        <View style={styles.dropdownList}>
+          <ScrollView
+            style={styles.dropdownScroll}
+            keyboardShouldPersistTaps="handled"
+            nestedScrollEnabled
+            {...hiddenScrollIndicatorProps}
+          >
+            {options.map((option) => (
+              <Pressable
+                key={option.value}
+                style={[styles.dropdownOption, option.value === value ? styles.dropdownOptionSelected : undefined]}
+                onPress={() => handleSelect(option.value)}
+              >
+                <Text style={[styles.dropdownOptionText, option.value === value ? styles.dropdownOptionTextSelected : undefined]}>
+                  {option.label}
+                </Text>
+                {option.value === value ? <ReactIcon icon={FiCheck} size={14} color={colors.primary} /> : null}
+              </Pressable>
+            ))}
+          </ScrollView>
+        </View>
+      ) : null}
       {error ? <Text style={styles.errorText}>{error}</Text> : null}
-      <Modal visible={open} transparent statusBarTranslucent animationType="slide" onRequestClose={() => setOpen(false)}>
-        <Pressable style={styles.sheetOverlay} onPress={() => setOpen(false)}>
-          <Pressable style={styles.bottomSheet} onPress={() => { }}>
-            <View style={styles.bottomSheetHandle} />
-            <Text style={styles.bottomSheetTitle}>{label}</Text>
-            <ScrollView keyboardShouldPersistTaps="handled" {...hiddenScrollIndicatorProps}>
-              {options.map((option) => (
-                <Pressable
-                  key={option.value}
-                  style={[styles.sheetOption, option.value === value ? styles.sheetOptionSelected : undefined]}
-                  onPress={() => handleSelect(option.value)}
-                >
-                  <Text style={[styles.sheetOptionText, option.value === value ? styles.sheetOptionTextSelected : undefined]}>
-                    {option.label}
-                  </Text>
-                  {option.value === value ? <ReactIcon icon={FiCheck} size={18} color={colors.primary} /> : null}
-                </Pressable>
-              ))}
-            </ScrollView>
-          </Pressable>
-        </Pressable>
-      </Modal>
     </View>
   );
 }

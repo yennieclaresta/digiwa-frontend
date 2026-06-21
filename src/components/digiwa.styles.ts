@@ -1,4 +1,4 @@
-import { StyleSheet } from 'react-native';
+import { Platform, StyleSheet } from 'react-native';
 
 import { colors, layout, radius, shadows, spacing, typography } from '@/constants/theme';
 
@@ -188,8 +188,12 @@ export const styles = StyleSheet.create({
   selectTriggerOpen: {
     borderBottomLeftRadius: 0,
     borderBottomRightRadius: 0,
+    borderBottomColor: 'transparent',
   },
-  webInlineOptions: {
+  fieldDropdownOpen: {
+    zIndex: 100,
+  },
+  dropdownList: {
     backgroundColor: colors.surface,
     borderWidth: 1,
     borderTopWidth: 0,
@@ -197,24 +201,38 @@ export const styles = StyleSheet.create({
     borderBottomLeftRadius: radius.md,
     borderBottomRightRadius: radius.md,
     overflow: 'hidden',
+    ...Platform.select({
+      android: { elevation: 6 },
+      ios: {
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.12,
+        shadowRadius: 8,
+      },
+    }),
   },
-  webOption: {
+  dropdownScroll: {
+    maxHeight: 240,
+  },
+  dropdownOption: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: spacing.lg,
     paddingVertical: spacing.md,
     gap: spacing.sm,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.neutralSoft,
   },
-  webOptionSelected: {
+  dropdownOptionSelected: {
     backgroundColor: colors.primaryLight,
   },
-  webOptionText: {
+  dropdownOptionText: {
     flex: 1,
     color: colors.textPrimary,
     fontSize: typography.body,
   },
-  webOptionTextSelected: {
+  dropdownOptionTextSelected: {
     color: colors.primary,
     fontWeight: '700',
   },

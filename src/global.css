@@ -10,7 +10,9 @@
 }
 
 /* Universal scrollbar hiding - highest priority */
-html, body, *::-webkit-scrollbar {
+html,
+body,
+*::-webkit-scrollbar {
   scrollbar-width: none !important;
   -ms-overflow-style: none !important;
 }
@@ -42,12 +44,20 @@ div::-webkit-scrollbar {
 }
 
 /* Hide scrollbar on root and common scroll containers */
-#root, body, html, main, [role="main"], [role="region"], .scroll-container {
+#root,
+body,
+html,
+main,
+[role="main"],
+[role="region"],
+.scroll-container {
   scrollbar-width: none !important;
   -ms-overflow-style: none !important;
 }
 
-#root::-webkit-scrollbar, body::-webkit-scrollbar, html::-webkit-scrollbar {
+#root::-webkit-scrollbar,
+body::-webkit-scrollbar,
+html::-webkit-scrollbar {
   display: none !important;
   width: 0px !important;
   height: 0px !important;

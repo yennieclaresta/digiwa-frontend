@@ -16,7 +16,9 @@ import {
   updateRequestStatus as updateRequestStatusRequest,
   updateMyPassword,
 } from '@/services/api';
+
 import { getDispatchDocuments } from '@/utils/documentDispatch';
+
 import {
   mapAdminActivity,
   mapGeneratedDocument,
@@ -25,7 +27,9 @@ import {
   mapRequestSummary,
   mapUser,
 } from '@/services/apiMappers';
+
 import { uploadFilesToCloudinary } from '@/services/uploadService';
+
 import type {
   AdminActivity,
   CitizenRequest,
@@ -219,7 +223,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     setToken(response.token);
     setCurrentUser(user);
     await AsyncStorage.setItem(SESSION_KEY, response.token);
-    loadAppData(response.token, user).catch(() => {});
+    loadAppData(response.token, user).catch(() => { });
     return user;
   };
 
@@ -336,9 +340,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
       previous.map((notification) =>
         notification.id === notificationId
           ? {
-              ...notification,
-              isRead: true,
-            }
+            ...notification,
+            isRead: true,
+          }
           : notification,
       ),
     );

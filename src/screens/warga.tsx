@@ -33,7 +33,7 @@ import {
   StatusBadge,
 } from '@/components/digiwa';
 import { serviceIcons, services, statusOptions } from '@/constants/services';
-import { colors, radius, spacing, typography } from '@/constants/theme';
+import { colors } from '@/constants/theme';
 import { useApp } from '@/context/AppContext';
 import type { RequestStatus } from '@/types';
 import { formatDateTime, sortByNewest } from '@/utils/format';
