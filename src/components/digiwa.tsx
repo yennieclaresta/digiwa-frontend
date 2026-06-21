@@ -385,34 +385,43 @@ export function FileUploadField({
   onChange,
   error,
   required,
+  onPickStart,
+  onPickEnd,
 }: {
   label: string;
   value?: UploadedFile;
   onChange: (file: UploadedFile) => void;
   error?: string;
   required?: boolean;
+  onPickStart?: () => Promise<void> | void;
+  onPickEnd?: () => Promise<void> | void;
 }) {
   async function pickFile() {
-    const result = await DocumentPicker.getDocumentAsync({
-      copyToCacheDirectory: true,
-      type: '*/*',
-    });
+    await onPickStart?.();
+    try {
+      const result = await DocumentPicker.getDocumentAsync({
+        copyToCacheDirectory: true,
+        type: '*/*',
+      });
 
-    if (result.canceled || !result.assets[0]) {
-      return;
+      if (result.canceled || !result.assets[0]) {
+        return;
+      }
+
+      const asset = result.assets[0];
+      onChange({
+        id: `${Date.now()}-${asset.name}`,
+        name: asset.name,
+        uri: asset.uri,
+        type: asset.mimeType ?? 'application/octet-stream',
+        size: asset.size ?? 0,
+        uploadedAt: new Date().toISOString(),
+        // On Expo Web, asset.file is the native File object needed for proper multipart upload
+        file: (asset as { file?: File }).file,
+      });
+    } finally {
+      await onPickEnd?.();
     }
-
-    const asset = result.assets[0];
-    onChange({
-      id: `${Date.now()}-${asset.name}`,
-      name: asset.name,
-      uri: asset.uri,
-      type: asset.mimeType ?? 'application/octet-stream',
-      size: asset.size ?? 0,
-      uploadedAt: new Date().toISOString(),
-      // On Expo Web, asset.file is the native File object needed for proper multipart upload
-      file: (asset as { file?: File }).file,
-    });
   }
 
   return (

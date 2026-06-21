@@ -127,8 +127,8 @@ export const services: ServiceConfig[] = [
             type: 'select',
             visibleWhen: { field: 'jenisPengajuan', values: ['KTP Baru'] },
             options: [
-              { label: 'KTP Pertama (belum pernah punya KTP)', value: 'baru' },
-              { label: 'Kehilangan KTP (ingin membuat baru)', value: 'kehilangan' },
+              { label: 'KTP Pertama (Belum Pernah Punya KTP)', value: 'baru' },
+              { label: 'Kehilangan KTP (Membuat KTP Baru)', value: 'kehilangan' },
             ],
           },
         ],

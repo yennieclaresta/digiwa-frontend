@@ -1,6 +1,7 @@
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useEffect, useMemo, useState } from 'react';
 import { Controller, useForm, useWatch } from 'react-hook-form';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Alert, Text, View } from 'react-native';
 
 import { styles } from './requestForm.styles';
@@ -37,6 +38,8 @@ const nikPattern = /^\d{16}$/;
 const phonePattern = /^[0-9+]{9,15}$/;
 const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const datePattern = /^\d{4}-\d{2}-\d{2}$/;
+const REQUEST_FORM_DRAFT_KEY = 'DIGIWA_REQUEST_FORM_DRAFT';
+const PENDING_FILE_PICKER_KEY = 'DIGIWA_PENDING_FILE_PICKER';
 
 function fileCategoryForUpload(serviceType: ServiceType, fieldKey: string) {
   const categories: Record<ServiceType, Record<string, string>> = {
@@ -115,6 +118,27 @@ export function RequestFormScreen() {
   } = useForm<FormValues>({ defaultValues });
   const watchedValues = useWatch({ control });
 
+  async function saveDraft() {
+    if (!config || !currentUser) {
+      return;
+    }
+    await AsyncStorage.setItem(
+      REQUEST_FORM_DRAFT_KEY,
+      JSON.stringify({
+        serviceType: config.type,
+        step,
+        formData: getValues(),
+        uploadedFiles,
+        statementChecked,
+        nikDisabledForKtp,
+      }),
+    );
+  }
+
+  async function clearDraft() {
+    await AsyncStorage.multiRemove([REQUEST_FORM_DRAFT_KEY, PENDING_FILE_PICKER_KEY]);
+  }
+
   // Sync NIK from profile whenever it becomes available (e.g., after KTP request is completed)
   useEffect(() => {
     if (!currentUser?.nik) return;
@@ -129,6 +153,58 @@ export function RequestFormScreen() {
       setValue('alasanKtpBaru', '');
     }
   }, [watchedValues?.jenisPengajuan, config?.type, setValue]);
+
+  useEffect(() => {
+    if (!config || !currentUser) {
+      return;
+    }
+    const activeConfig = config;
+    let active = true;
+
+    async function restoreDraft() {
+      try {
+        const raw = await AsyncStorage.getItem(REQUEST_FORM_DRAFT_KEY);
+        if (!raw || !active) {
+          return;
+        }
+        const draft = JSON.parse(raw) as {
+          serviceType?: ServiceType;
+          step?: number;
+          formData?: Record<string, string>;
+          uploadedFiles?: Record<string, UploadedFile>;
+          statementChecked?: boolean;
+          nikDisabledForKtp?: boolean;
+        };
+        if (draft.serviceType !== activeConfig.type) {
+          return;
+        }
+        Object.entries(draft.formData ?? {}).forEach(([key, value]) => {
+          setValue(key, value ?? '');
+        });
+        setUploadedFiles(draft.uploadedFiles ?? {});
+        setStatementChecked(Boolean(draft.statementChecked));
+        setNikDisabledForKtp(Boolean(draft.nikDisabledForKtp));
+        setStep(Math.max(0, Math.min(Number(draft.step ?? 0), activeConfig.sections.length)));
+      } catch {
+        await AsyncStorage.removeItem(REQUEST_FORM_DRAFT_KEY);
+      } finally {
+        await AsyncStorage.removeItem(PENDING_FILE_PICKER_KEY);
+      }
+    }
+
+    restoreDraft();
+
+    return () => {
+      active = false;
+    };
+  }, [config, currentUser, setValue]);
+
+  useEffect(() => {
+    if (!config || !currentUser) {
+      return;
+    }
+    saveDraft().catch(() => { });
+  }, [config, currentUser, watchedValues, step, uploadedFiles, statementChecked, nikDisabledForKtp]);
 
   if (!config || !currentUser) {
     return (
@@ -282,6 +358,7 @@ export function RequestFormScreen() {
       }
 
       const request = await submitRequest(activeConfig.type, getValues(), Object.values(uploadedFiles));
+      await clearDraft();
       setModalVisible(false);
       router.replace({ pathname: '/success', params: { requestId: request.id } });
     } catch (caught) {
@@ -400,6 +477,11 @@ export function RequestFormScreen() {
               required={isUploadRequired(upload)}
               value={uploadedFiles[upload.key]}
               error={fileErrors[upload.key]}
+              onPickStart={async () => {
+                await saveDraft();
+                await AsyncStorage.setItem(PENDING_FILE_PICKER_KEY, activeConfig.type);
+              }}
+              onPickEnd={() => AsyncStorage.removeItem(PENDING_FILE_PICKER_KEY)}
               onChange={(file) => {
                 setUploadedFiles((previous) => ({
                   ...previous,

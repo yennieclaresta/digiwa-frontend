@@ -1,5 +1,6 @@
 import { useRouter } from 'expo-router';
 import { useEffect, useRef, useState } from 'react';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Controller, useForm, useWatch } from 'react-hook-form';
 import { FiLogIn, FiUserPlus } from 'react-icons/fi';
 
@@ -50,6 +51,8 @@ const requiredMessage = 'Data belum lengkap.';
 const nikPattern = /^\d{16}$/;
 const phonePattern = /^[0-9+]{9,15}$/;
 const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const REQUEST_FORM_DRAFT_KEY = 'DIGIWA_REQUEST_FORM_DRAFT';
+const PENDING_FILE_PICKER_KEY = 'DIGIWA_PENDING_FILE_PICKER';
 
 export function SplashScreen() {
   const router = useRouter();
@@ -77,6 +80,22 @@ export function SplashScreen() {
         if (!currentUser) {
           router.replace('/login');
           return;
+        }
+        if (currentUser.role === 'warga') {
+          const pendingPickerService = await AsyncStorage.getItem(PENDING_FILE_PICKER_KEY);
+          const draftRaw = await AsyncStorage.getItem(REQUEST_FORM_DRAFT_KEY);
+          if (pendingPickerService && draftRaw) {
+            try {
+              const draft = JSON.parse(draftRaw) as { serviceType?: string };
+              if (draft.serviceType === pendingPickerService) {
+                await AsyncStorage.removeItem(PENDING_FILE_PICKER_KEY);
+                router.replace({ pathname: '/form/[service]', params: { service: pendingPickerService } } as never);
+                return;
+              }
+            } catch {
+              await AsyncStorage.multiRemove([REQUEST_FORM_DRAFT_KEY, PENDING_FILE_PICKER_KEY]);
+            }
+          }
         }
         router.replace((currentUser.role === 'admin' ? '/(admin)' : '/(warga)') as never);
       } catch (error) {
