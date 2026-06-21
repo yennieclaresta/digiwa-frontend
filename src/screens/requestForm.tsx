@@ -203,8 +203,18 @@ export function RequestFormScreen() {
     if (!config || !currentUser) {
       return;
     }
-    saveDraft().catch(() => { });
-  }, [config, currentUser, watchedValues, step, uploadedFiles, statementChecked, nikDisabledForKtp]);
+    AsyncStorage.setItem(
+      REQUEST_FORM_DRAFT_KEY,
+      JSON.stringify({
+        serviceType: config.type,
+        step,
+        formData: getValues(),
+        uploadedFiles,
+        statementChecked,
+        nikDisabledForKtp,
+      }),
+    ).catch(() => { });
+  }, [config, currentUser, getValues, watchedValues, step, uploadedFiles, statementChecked, nikDisabledForKtp]);
 
   if (!config || !currentUser) {
     return (
