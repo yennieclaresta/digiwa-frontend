@@ -1,0 +1,12 @@
+Prerequisite:
+Java JDK 17/21 LTS
+Android Studio (Install Android SDK)
+
+Modified:
+local.properties in android/ or create new file add: sdk.dir=<PATH-TO-ANDROID-SDK>
+
+Run:
+npm run android-prebuild
+cd android/
+.\gradlew --no-daemon clean
+.\gradlew assembleRelease -PreactNativeArchitectures=arm64-v8a

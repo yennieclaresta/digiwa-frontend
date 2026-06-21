@@ -398,7 +398,7 @@ export function SelectField({
       <Text style={styles.label}>{label}{required ? <Text style={styles.required}> *</Text> : null}</Text>
       {trigger}
       {error ? <Text style={styles.errorText}>{error}</Text> : null}
-      <Modal visible={open} transparent animationType="fade" onRequestClose={() => setOpen(false)}>
+      <Modal visible={open} transparent statusBarTranslucent animationType="slide" onRequestClose={() => setOpen(false)}>
         <Pressable style={styles.sheetOverlay} onPress={() => setOpen(false)}>
           <Pressable style={styles.bottomSheet} onPress={() => { }}>
             <View style={styles.bottomSheetHandle} />
@@ -665,7 +665,7 @@ export function DatePickerField({
       <Text style={styles.label}>{label}{required ? <Text style={styles.required}> *</Text> : null}</Text>
       {trigger}
       {error ? <Text style={styles.errorText}>{error}</Text> : null}
-      <Modal visible={open} transparent animationType="fade" onRequestClose={() => setOpen(false)}>
+      <Modal visible={open} transparent statusBarTranslucent animationType="slide" onRequestClose={() => setOpen(false)}>
         <Pressable style={styles.sheetOverlay} onPress={() => setOpen(false)}>
           <Pressable style={styles.calendarSheet} onPress={() => { }}>
             <View style={styles.bottomSheetHandle} />
@@ -790,7 +790,7 @@ export function TimePickerField({
       <Text style={styles.label}>{label}{required ? <Text style={styles.required}> *</Text> : null}</Text>
       {trigger}
       {error ? <Text style={styles.errorText}>{error}</Text> : null}
-      <Modal visible={open} transparent animationType="fade" onRequestClose={() => setOpen(false)}>
+      <Modal visible={open} transparent statusBarTranslucent animationType="slide" onRequestClose={() => setOpen(false)}>
         <Pressable style={styles.sheetOverlay} onPress={() => setOpen(false)}>
           <Pressable style={styles.timePickerSheet} onPress={() => { }}>
             <View style={styles.bottomSheetHandle} />

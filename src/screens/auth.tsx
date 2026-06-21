@@ -87,17 +87,15 @@ export function SplashScreen() {
   }, [currentUser, router, sessionLoading, navigationReady]);
 
   return (
-    <Screen scroll={false}>
-      <View style={styles.splash}>
-        <Image source={require('../../assets/digiwa.png')} style={styles.logo} resizeMode="contain" />
-        <Text style={styles.appName}>DIGIWA</Text>
-        <Text style={styles.subtitle}>Digitalisasi Data Warga</Text>
-        <View style={styles.splashLoading}>
-          <ActivityIndicator color={colors.primary} />
-          <Text style={styles.splashLoadingText}>Menyiapkan layanan...</Text>
-        </View>
+    <View style={styles.splash}>
+      <Image source={require('../../assets/digiwa.png')} style={styles.logo} resizeMode="contain" />
+      <Text style={styles.appName}>DIGIWA</Text>
+      <Text style={styles.subtitle}>Digitalisasi Data Warga</Text>
+      <View style={styles.splashLoading}>
+        <ActivityIndicator color={colors.primary} />
+        <Text style={styles.splashLoadingText}>Menyiapkan layanan...</Text>
       </View>
-    </Screen>
+    </View>
   );
 }
 
