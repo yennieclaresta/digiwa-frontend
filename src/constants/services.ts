@@ -19,7 +19,7 @@ export const serviceLabels: Record<ServiceType, string> = {
   ktp: 'Pengajuan KTP',
   akta_kelahiran: 'Akta Kelahiran',
   akta_kematian: 'Akta Kematian',
-  surat_rt_rw: 'Surat RT/RW',
+  surat_rt_rw: 'Surat Pengantar RT/RW',
 };
 
 export const statusLabels: Record<RequestStatus, string> = {
@@ -324,7 +324,7 @@ export const services: ServiceConfig[] = [
   },
   {
     type: 'surat_rt_rw',
-    shortTitle: 'Surat RT/RW',
+    shortTitle: 'Surat Pengantar RT/RW',
     title: 'Surat Permohonan RT/RW',
     description: 'Buat surat pengantar atau keterangan untuk berbagai kebutuhan warga.',
     requiredDocuments: ['KTP', 'Kartu Keluarga', 'Dokumen pendukung jika ada'],

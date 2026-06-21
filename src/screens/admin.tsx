@@ -211,7 +211,7 @@ export function AdminPrintScreen() {
     }
     try {
       const document = request.generatedDocuments[0] ?? (await generateDocument(requestId));
-      await Linking.openURL(document.downloadUrl || document.publicUrl);
+      await Linking.openURL(document.publicUrl || document.downloadUrl || '');
     } catch (caught) {
       Alert.alert(caught instanceof Error ? caught.message : 'Gagal menyimpan data. Silakan coba lagi.');
     }

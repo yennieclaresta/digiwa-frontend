@@ -488,6 +488,8 @@ type CalendarViewProps = {
 function CalendarView({ year, month, selectedDay, onNavigate, onSelect }: CalendarViewProps) {
   const today = todayParts();
   const weeks = buildCalWeeks(year, month);
+  const [yearEdit, setYearEdit] = useState(false);
+  const [yearInput, setYearInput] = useState(String(year));
 
   function prevMonth() {
     if (month === 0) onNavigate(year - 1, 11);
@@ -496,6 +498,16 @@ function CalendarView({ year, month, selectedDay, onNavigate, onSelect }: Calend
   function nextMonth() {
     if (month === 11) onNavigate(year + 1, 0);
     else onNavigate(year, month + 1);
+  }
+
+  function commitYearInput() {
+    const parsed = parseInt(yearInput, 10);
+    if (!isNaN(parsed) && parsed >= 1900 && parsed <= today.y) {
+      onNavigate(parsed, month);
+    } else {
+      setYearInput(String(year));
+    }
+    setYearEdit(false);
   }
 
   return (
@@ -507,7 +519,25 @@ function CalendarView({ year, month, selectedDay, onNavigate, onSelect }: Calend
         <Pressable onPress={prevMonth} style={styles.calNavBtn} hitSlop={8}>
           <ReactIcon icon={FiChevronLeft} size={16} color={colors.primary} />
         </Pressable>
-        <Text style={styles.calMonthLabel}>{MONTH_NAMES_ID[month]} {year}</Text>
+        <Pressable
+          style={{ flex: 1, alignItems: 'center' }}
+          onPress={() => { setYearInput(String(year)); setYearEdit(true); }}
+        >
+          {yearEdit ? (
+            <TextInput
+              value={yearInput}
+              onChangeText={setYearInput}
+              onBlur={commitYearInput}
+              onSubmitEditing={commitYearInput}
+              keyboardType="number-pad"
+              maxLength={4}
+              autoFocus
+              style={[styles.calMonthLabel, { borderBottomWidth: 1, borderColor: colors.primary, minWidth: 60, textAlign: 'center' }]}
+            />
+          ) : (
+            <Text style={styles.calMonthLabel}>{MONTH_NAMES_ID[month]} {year}</Text>
+          )}
+        </Pressable>
         <Pressable onPress={nextMonth} style={styles.calNavBtn} hitSlop={8}>
           <ReactIcon icon={FiChevronRight} size={16} color={colors.primary} />
         </Pressable>

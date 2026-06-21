@@ -78,19 +78,31 @@ function useRequestDetail() {
   };
 }
 
+function resolveOpenUrl(url: string): string {
+  // Cloudinary PDFs stored as raw resources must use raw/upload, not image/upload.
+  if (url.includes('res.cloudinary.com') && url.includes('/image/upload/')) {
+    const lc = url.toLowerCase();
+    if (lc.endsWith('.pdf') || lc.includes('surat') || lc.includes('akta') || lc.includes('mock-')) {
+      return url.replace('/image/upload/', '/raw/upload/');
+    }
+  }
+  return url;
+}
+
 async function openRemoteFile(url?: string) {
   if (!url) {
     Alert.alert('File belum tersedia', 'Tautan dokumen belum tersedia.');
     return;
   }
 
-  const supported = await Linking.canOpenURL(url);
+  const resolved = resolveOpenUrl(url);
+  const supported = await Linking.canOpenURL(resolved);
   if (!supported) {
     Alert.alert('Tautan tidak valid', 'Dokumen tidak dapat dibuka dari perangkat ini.');
     return;
   }
 
-  await Linking.openURL(url);
+  await Linking.openURL(resolved);
 }
 
 function latestDocument(request: CitizenRequest) {
@@ -142,7 +154,7 @@ export function StatusDetailScreen() {
               key={doc.id}
               title={`Download ${doc.documentLabel || doc.fileName}`}
               icon={FiDownload}
-              onPress={() => void openRemoteFile(doc.downloadUrl || doc.publicUrl)}
+              onPress={() => void openRemoteFile(doc.publicUrl || doc.downloadUrl)}
             />
           ))}
         </>
@@ -241,7 +253,7 @@ function AdminRequestDetailContent({
     setDocumentBusy(true);
     try {
       const document = await ensureDocument();
-      await openRemoteFile(document.downloadUrl || document.publicUrl);
+      await openRemoteFile(document.publicUrl || document.downloadUrl);
     } catch (caught) {
       Alert.alert(caught instanceof Error ? caught.message : 'Gagal menyimpan data. Silakan coba lagi.');
     } finally {
@@ -290,7 +302,7 @@ function AdminRequestDetailContent({
               key={doc.id}
               title={doc.documentLabel || doc.fileName}
               icon={FiDownload}
-              onPress={() => void openRemoteFile(doc.downloadUrl || doc.publicUrl)}
+              onPress={() => void openRemoteFile(doc.publicUrl || doc.downloadUrl)}
               style={styles.printButton}
             />
           ))}

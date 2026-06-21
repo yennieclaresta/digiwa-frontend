@@ -13,10 +13,8 @@ type RawRecord = Record<string, unknown>;
 const FILE_LABEL_MAP: Record<string, string> = {
   'cetak-ktp.pdf': 'Cetak KTP',
   'surat-ktp.pdf': 'Surat KTP',
-  'cetak-akta-kematian.pdf': 'Cetak Akta Kematian',
-  'surat-akta-kematian.pdf': 'Surat Akta Kematian',
-  'cetak-akta-kelahiran.pdf': 'Cetak Akta Kelahiran',
-  'surat-akta-kelahiran.pdf': 'Surat Akta Kelahiran',
+  'surat-akta-kematian.pdf': 'Surat Pengantar Akta Kematian',
+  'surat-akta-kelahiran.pdf': 'Surat Pengantar Akta Kelahiran',
   'surat-pengantar-rtrw.pdf': 'Surat Pengantar RT/RW',
 };
 
