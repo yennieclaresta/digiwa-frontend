@@ -1,20 +1,14 @@
 import '../global.css';
 
-import * as SplashScreen from 'expo-splash-screen';
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
-import { Component, ReactNode, useEffect } from 'react';
+import { Component, ReactNode } from 'react';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
-import { Platform, Text, View } from 'react-native';
+import { Text, View } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import { colors } from '@/constants/theme';
 import { AppProvider } from '@/context/AppContext';
-
-// Only prevent auto-hide on native platforms; web has no native splash overlay
-if (Platform.OS !== 'web') {
-  SplashScreen.preventAutoHideAsync();
-}
 
 class AppErrorBoundary extends Component<{ children: ReactNode }, { error: Error | null }> {
   state = { error: null };
@@ -42,18 +36,6 @@ class AppErrorBoundary extends Component<{ children: ReactNode }, { error: Error
 }
 
 export default function RootLayout() {
-  useEffect(() => {
-    if (Platform.OS === 'web') return;
-    const timer = setTimeout(async () => {
-      try {
-        await SplashScreen.hideAsync();
-      } catch {
-        // splash screen already hidden or not available
-      }
-    }, 100);
-    return () => clearTimeout(timer);
-  }, []);
-
   return (
     <AppErrorBoundary>
       <SafeAreaProvider>

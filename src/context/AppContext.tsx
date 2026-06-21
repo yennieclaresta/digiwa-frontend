@@ -200,19 +200,26 @@ export function AppProvider({ children }: { children: ReactNode }) {
   };
 
   const register = async (input: RegisterInput) => {
+    const nik = input.nik.trim();
     const response = await registerRequest({
       name: input.name,
-      nik: input.nik,
+      full_name: input.name,
+      nik: nik || undefined,
       kkNumber: input.kkNumber,
+      kk_number: input.kkNumber,
       email: input.email,
       phone: input.phone,
+      phone_number: input.phone,
       address: input.address,
       rt: input.rt,
       rw: input.rw,
       password: input.password,
     });
     const user = mapUser(response.user);
-    await persistSession(response.token, user);
+    setToken(response.token);
+    setCurrentUser(user);
+    await AsyncStorage.setItem(SESSION_KEY, response.token);
+    loadAppData(response.token, user).catch(() => {});
     return user;
   };
 
