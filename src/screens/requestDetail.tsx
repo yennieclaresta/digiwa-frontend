@@ -79,6 +79,9 @@ function useRequestDetail() {
 }
 
 function resolveOpenUrl(url: string): string {
+  if (url.includes('res.cloudinary.com') && url.includes('/raw/upload/')) {
+    url = url.replace('/raw/upload/', '/image/upload/');
+  }
   if (url.includes('res.cloudinary.com') && url.includes('/image/upload/')) {
     const tail = url.split('/image/upload/')[1] || '';
     const lastSegment = tail.split('/').pop() || '';
