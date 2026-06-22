@@ -4,6 +4,22 @@ import { Platform } from 'react-native';
 import { requestUploadSignature } from '@/services/api';
 import type { ServiceType, UploadedFile } from '@/types';
 
+function buildCloudinaryUrl(
+  cloudName: string,
+  publicId?: string,
+  resourceType?: string,
+  format?: string,
+  fallbackUrl?: string,
+) {
+  if (!cloudName || !publicId) {
+    return fallbackUrl || '';
+  }
+  const normalizedType = resourceType === 'raw' || format === 'pdf' ? 'raw' : 'image';
+  const lastSegment = publicId.split('/').pop() || '';
+  const assetPath = !lastSegment.includes('.') && format ? `${publicId}.${format}` : publicId;
+  return `https://res.cloudinary.com/${cloudName}/${normalizedType}/upload/${assetPath}`;
+}
+
 export async function uploadFilesToCloudinary(
   token: string,
   serviceType: ServiceType,
@@ -74,17 +90,25 @@ export async function uploadFilesToCloudinary(
       );
     }
 
+    const remoteUrl = buildCloudinaryUrl(
+      signature.cloudName,
+      payload.public_id,
+      payload.resource_type,
+      payload.format,
+      payload.secure_url,
+    );
+
     uploaded.push({
       ...file,
       file: undefined, // strip the File object — not serialisable to JSON
-      uri: payload.secure_url,
+      uri: remoteUrl,
       name: file.name || payload.original_filename || 'dokumen',
       type:
         payload.resource_type && payload.format
           ? `${payload.resource_type}/${payload.format}`
           : file.type,
       size: payload.bytes ?? file.size,
-      publicUrl: payload.secure_url,
+      publicUrl: remoteUrl,
       storagePath: payload.public_id || file.storagePath,
     });
   }

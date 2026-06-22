@@ -97,6 +97,30 @@ function resolveOpenUrl(url: string): string {
   return url;
 }
 
+function resolveUploadedFileUrl(file: UploadedFile): string {
+  const baseUrl = file.publicUrl || file.uri || '';
+  const storagePath = file.storagePath || '';
+  if (!baseUrl.includes('res.cloudinary.com') || !storagePath || storagePath.startsWith('http')) {
+    return resolveOpenUrl(baseUrl);
+  }
+
+  const cloudMatch = baseUrl.match(/res\.cloudinary\.com\/([^/]+)/i);
+  const cloudName = cloudMatch?.[1] || '';
+  if (!cloudName) {
+    return resolveOpenUrl(baseUrl);
+  }
+
+  const lowerName = file.name.toLowerCase();
+  const lowerType = file.type.toLowerCase();
+  const extMatch = lowerName.match(/\.([a-z0-9]+)$/i);
+  const ext = extMatch?.[1] || (lowerType.includes('pdf') ? 'pdf' : '');
+  const lastSegment = storagePath.split('/').pop() || '';
+  const assetPath = !lastSegment.includes('.') && ext ? `${storagePath}.${ext}` : storagePath;
+  const resourceType = lowerType.includes('pdf') || ext === 'pdf' ? 'raw' : 'image';
+
+  return `https://res.cloudinary.com/${cloudName}/${resourceType}/upload/${assetPath}`;
+}
+
 async function openRemoteFile(url?: string) {
   if (!url) {
     Alert.alert('File belum tersedia', 'Tautan dokumen belum tersedia.');
@@ -394,10 +418,10 @@ function DocumentList({ files, adminMode }: { files?: UploadedFile[]; adminMode?
           </View>
           {adminMode ? (
             <View style={styles.documentActions}>
-              <Pressable onPress={() => void openRemoteFile(file.publicUrl || file.uri)} style={styles.documentAction}>
+              <Pressable onPress={() => void openRemoteFile(resolveUploadedFileUrl(file))} style={styles.documentAction}>
                 <ReactIcon icon={FiEye} color={colors.primary} size={18} />
               </Pressable>
-              <Pressable onPress={() => void openRemoteFile(file.downloadUrl || file.publicUrl || file.uri)} style={styles.documentAction}>
+              <Pressable onPress={() => void openRemoteFile(resolveUploadedFileUrl(file))} style={styles.documentAction}>
                 <ReactIcon icon={FiDownload} color={colors.primary} size={18} />
               </Pressable>
             </View>

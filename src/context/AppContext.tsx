@@ -248,17 +248,6 @@ export function AppProvider({ children }: { children: ReactNode }) {
       throw new Error('Unauthorized.');
     }
 
-    const cachedRequest = requests.find((item) => item.id === requestId);
-    if (
-      cachedRequest &&
-      (Object.keys(cachedRequest.formData).length > 0 ||
-        cachedRequest.timeline.length > 0 ||
-        cachedRequest.uploadedFiles.length > 0 ||
-        cachedRequest.generatedDocuments.length > 0)
-    ) {
-      return cachedRequest;
-    }
-
     const response = await getRequest(token, requestId);
     const request = mapRequestDetail(response.request);
     setRequests((previous) => mergeRequest(previous, request));
