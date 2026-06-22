@@ -41,16 +41,9 @@ import { formatDateTime, serviceLabel, sortByNewest } from '@/utils/format';
 
 function resolveDocumentUrl(url: string): string {
   if (url.includes('res.cloudinary.com') && url.includes('/image/upload/')) {
-    const lc = url.toLowerCase();
-    if (lc.endsWith('.pdf') || lc.includes('surat') || lc.includes('akta') || lc.includes('mock-')) {
-      url = url.replace('/image/upload/', '/raw/upload/');
-    }
-  }
-  if (url.includes('res.cloudinary.com') && url.includes('/raw/upload/')) {
-    const lc = url.toLowerCase();
-    const tail = url.split('/raw/upload/')[1] || '';
+    const tail = url.split('/image/upload/')[1] || '';
     const lastSegment = tail.split('/').pop() || '';
-    if ((lc.includes('surat') || lc.includes('akta') || lc.includes('mock-')) && !lastSegment.includes('.')) {
+    if (!lastSegment.includes('.')) {
       return `${url}.pdf`;
     }
   }

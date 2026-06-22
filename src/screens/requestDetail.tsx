@@ -79,18 +79,10 @@ function useRequestDetail() {
 }
 
 function resolveOpenUrl(url: string): string {
-  // Cloudinary PDFs stored as raw resources must use raw/upload, not image/upload.
   if (url.includes('res.cloudinary.com') && url.includes('/image/upload/')) {
-    const lc = url.toLowerCase();
-    if (lc.endsWith('.pdf') || lc.includes('surat') || lc.includes('akta') || lc.includes('mock-')) {
-      url = url.replace('/image/upload/', '/raw/upload/');
-    }
-  }
-  if (url.includes('res.cloudinary.com') && url.includes('/raw/upload/')) {
-    const lc = url.toLowerCase();
-    const tail = url.split('/raw/upload/')[1] || '';
+    const tail = url.split('/image/upload/')[1] || '';
     const lastSegment = tail.split('/').pop() || '';
-    if ((lc.includes('surat') || lc.includes('akta') || lc.includes('mock-')) && !lastSegment.includes('.')) {
+    if (!lastSegment.includes('.')) {
       return `${url}.pdf`;
     }
   }
@@ -98,27 +90,7 @@ function resolveOpenUrl(url: string): string {
 }
 
 function resolveUploadedFileUrl(file: UploadedFile): string {
-  const baseUrl = file.publicUrl || file.uri || '';
-  const storagePath = file.storagePath || '';
-  if (!baseUrl.includes('res.cloudinary.com') || !storagePath || storagePath.startsWith('http')) {
-    return resolveOpenUrl(baseUrl);
-  }
-
-  const cloudMatch = baseUrl.match(/res\.cloudinary\.com\/([^/]+)/i);
-  const cloudName = cloudMatch?.[1] || '';
-  if (!cloudName) {
-    return resolveOpenUrl(baseUrl);
-  }
-
-  const lowerName = file.name.toLowerCase();
-  const lowerType = file.type.toLowerCase();
-  const extMatch = lowerName.match(/\.([a-z0-9]+)$/i);
-  const ext = extMatch?.[1] || (lowerType.includes('pdf') ? 'pdf' : '');
-  const lastSegment = storagePath.split('/').pop() || '';
-  const assetPath = !lastSegment.includes('.') && ext ? `${storagePath}.${ext}` : storagePath;
-  const resourceType = lowerType.includes('pdf') || ext === 'pdf' ? 'raw' : 'image';
-
-  return `https://res.cloudinary.com/${cloudName}/${resourceType}/upload/${assetPath}`;
+  return resolveOpenUrl(file.downloadUrl || file.publicUrl || file.uri || '');
 }
 
 async function openRemoteFile(url?: string) {
