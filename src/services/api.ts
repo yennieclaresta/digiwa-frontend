@@ -7,14 +7,11 @@ type RequestOptions = {
 const API_BASE_URL = (process.env.EXPO_PUBLIC_API_BASE_URL ?? '').trim().replace(/\/+$/, '');
 
 function toNetworkErrorMessage(error: unknown, url: string) {
-  const fallback = 'Gagal terhubung ke server.';
-  if (!(error instanceof Error)) {
-    return `${fallback} Target: ${url}`;
+  const fallback = 'Gagal terhubung ke server. Silakan coba lagi.';
+  if (__DEV__) {
+    console.error(`API request failed: ${url}`, error);
   }
-  if (!error.message) {
-    return `${fallback} Target: ${url}`;
-  }
-  return `${fallback} Target: ${url}. Detail: ${error.message}`;
+  return fallback;
 }
 
 function baseUrl() {
