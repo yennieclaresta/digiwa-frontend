@@ -116,9 +116,35 @@ function latestDocument(request: CitizenRequest) {
   return request.generatedDocuments[0];
 }
 
+function hasFilledTemplate(request: CitizenRequest) {
+  return request.serviceType === 'akta_kelahiran' || request.serviceType === 'akta_kematian';
+}
+
+// Letters generated from the official PDF template the moment the request is
+// submitted; the rest of generatedDocuments only appears once it is `selesai`.
+function isPermohonanLetter(doc: { documentLabel?: string }) {
+  return (doc.documentLabel || '').startsWith('Surat Permohonan');
+}
+
 export function StatusDetailScreen() {
-  const { currentUser } = useApp();
+  const { currentUser, downloadFilledForm } = useApp();
   const { request, loading } = useRequestDetail();
+  const [filledFormBusy, setFilledFormBusy] = useState(false);
+
+  async function handleDownloadFilledForm() {
+    if (!request) {
+      return;
+    }
+
+    setFilledFormBusy(true);
+    try {
+      await downloadFilledForm(request);
+    } catch (caught) {
+      Alert.alert(caught instanceof Error ? caught.message : 'Gagal mengunduh dokumen.');
+    } finally {
+      setFilledFormBusy(false);
+    }
+  }
 
   if (loading) {
     return <LoadingState />;
@@ -153,10 +179,13 @@ export function StatusDetailScreen() {
       <SectionTitle title="Berkas Diunggah" />
       <DocumentList files={request.uploadedFiles} />
 
-      {request.status === 'selesai' && request.generatedDocuments.length > 0 ? (
+      {hasFilledTemplate(request) ? (
         <>
-          <SectionTitle title="Dokumen Tersedia" subtitle="Klik tombol di bawah untuk mengunduh dokumen Anda." />
-          {request.generatedDocuments.map((doc) => (
+          <SectionTitle
+            title="Surat Permohonan"
+            subtitle="Formulir resmi yang terisi otomatis dari data pengajuan Anda."
+          />
+          {request.generatedDocuments.filter(isPermohonanLetter).map((doc) => (
             <PrimaryButton
               key={doc.id}
               title={`Download ${doc.documentLabel || doc.fileName}`}
@@ -164,16 +193,37 @@ export function StatusDetailScreen() {
               onPress={() => void openRemoteFile(doc.publicUrl || doc.downloadUrl)}
             />
           ))}
+          <SecondaryButton
+            title="Download Formulir Terisi"
+            icon={FiFileText}
+            onPress={handleDownloadFilledForm}
+            loading={filledFormBusy}
+          />
         </>
-      ) : request.status === 'selesai' ? (
-        <InfoBox>Surat selesai diproses. Silakan ambil sesuai arahan petugas atau unduh jika tersedia.</InfoBox>
+      ) : null}
+
+      {request.status === 'selesai' ? (
+        <>
+          <SectionTitle title="Dokumen Tersedia" subtitle="Klik tombol di bawah untuk mengunduh dokumen Anda." />
+          {request.generatedDocuments.filter((doc) => !isPermohonanLetter(doc)).map((doc) => (
+            <PrimaryButton
+              key={doc.id}
+              title={`Download ${doc.documentLabel || doc.fileName}`}
+              icon={FiDownload}
+              onPress={() => void openRemoteFile(doc.publicUrl || doc.downloadUrl)}
+            />
+          ))}
+          {!request.generatedDocuments.length && !hasFilledTemplate(request) ? (
+            <InfoBox>Surat selesai diproses. Silakan ambil sesuai arahan petugas atau unduh jika tersedia.</InfoBox>
+          ) : null}
+        </>
       ) : null}
     </Screen>
   );
 }
 
 export function AdminRequestDetailScreen() {
-  const { updateRequestStatus, generateDocument } = useApp();
+  const { updateRequestStatus, generateDocument, downloadFilledForm } = useApp();
   const { request, setRequest, loading } = useRequestDetail();
 
   if (loading) {
@@ -195,6 +245,7 @@ export function AdminRequestDetailScreen() {
       setRequest={setRequest}
       updateRequestStatus={updateRequestStatus}
       generateDocument={generateDocument}
+      downloadFilledForm={downloadFilledForm}
     />
   );
 }
@@ -204,17 +255,20 @@ function AdminRequestDetailContent({
   setRequest,
   updateRequestStatus,
   generateDocument,
+  downloadFilledForm,
 }: {
   request: CitizenRequest;
   setRequest: Dispatch<SetStateAction<CitizenRequest | null>>;
   updateRequestStatus: (requestId: string, status: RequestStatus, adminNote?: string) => Promise<CitizenRequest>;
   generateDocument: (requestId: string) => Promise<GeneratedDocument>;
+  downloadFilledForm: (request: CitizenRequest) => Promise<void>;
 }) {
   const [status, setStatus] = useState<RequestStatus>(request.status);
   const [adminNote, setAdminNote] = useState(request.adminNote ?? '');
   const [noteError, setNoteError] = useState('');
   const [saving, setSaving] = useState(false);
   const [documentBusy, setDocumentBusy] = useState(false);
+  const [filledFormBusy, setFilledFormBusy] = useState(false);
 
   async function handleSave() {
     if ((status === 'revisi' || status === 'ditolak') && !adminNote.trim()) {
@@ -268,6 +322,17 @@ function AdminRequestDetailContent({
     }
   }
 
+  async function handleDownloadFilledForm() {
+    setFilledFormBusy(true);
+    try {
+      await downloadFilledForm(request);
+    } catch (caught) {
+      Alert.alert(caught instanceof Error ? caught.message : 'Gagal mengunduh dokumen.');
+    } finally {
+      setFilledFormBusy(false);
+    }
+  }
+
   return (
     <Screen>
       <AppHeader title="Review Permohonan" subtitle={request.trackingNumber} showBack />
@@ -278,6 +343,18 @@ function AdminRequestDetailContent({
 
       <SectionTitle title="Berkas Diunggah" />
       <DocumentList files={request.uploadedFiles} adminMode />
+
+      {hasFilledTemplate(request) ? (
+        <>
+          <SectionTitle title="Formulir Template" subtitle="Isi otomatis dari data pengajuan warga." />
+          <SecondaryButton
+            title="Download Formulir Terisi"
+            icon={FiFileText}
+            onPress={handleDownloadFilledForm}
+            loading={filledFormBusy}
+          />
+        </>
+      ) : null}
 
       <SectionTitle title="Update Status" subtitle="Catatan wajib diisi jika status Revisi atau Ditolak." />
       <View style={styles.reviewCard}>

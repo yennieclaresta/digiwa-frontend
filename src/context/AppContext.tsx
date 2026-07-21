@@ -29,6 +29,7 @@ import {
 } from '@/services/apiMappers';
 
 import { uploadFilesToCloudinary } from '@/services/uploadService';
+import { downloadAuthenticatedPdf } from '@/utils/downloadPdf';
 
 import type {
   AdminActivity,
@@ -85,6 +86,7 @@ type AppContextValue = {
   updateRequestStatus: (requestId: string, status: RequestStatus, adminNote?: string) => Promise<CitizenRequest>;
   markNotificationRead: (notificationId: string) => Promise<void>;
   generateDocument: (requestId: string) => Promise<GeneratedDocument>;
+  downloadFilledForm: (request: CitizenRequest) => Promise<void>;
   updateProfile: (input: ProfileInput) => Promise<User>;
   changePassword: (input: PasswordInput) => Promise<void>;
 };
@@ -349,6 +351,18 @@ export function AppProvider({ children }: { children: ReactNode }) {
     return document;
   };
 
+  const downloadFilledForm = async (request: CitizenRequest) => {
+    if (!token) {
+      throw new Error('Unauthorized.');
+    }
+
+    await downloadAuthenticatedPdf(
+      token,
+      `/requests/${request.id}/filled-form`,
+      `${request.trackingNumber}-${request.serviceType}.pdf`,
+    );
+  };
+
   const updateProfile = async (input: ProfileInput) => {
     if (!token || !currentUser) {
       throw new Error('Unauthorized.');
@@ -384,6 +398,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     updateRequestStatus,
     markNotificationRead,
     generateDocument,
+    downloadFilledForm,
     updateProfile,
     changePassword,
   };
