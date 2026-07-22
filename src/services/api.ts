@@ -155,17 +155,21 @@ export function requestUploadSignature(token: string, serviceType: string) {
   });
 }
 
-export function generateDocument(
-  token: string,
-  requestId: string,
-  overrides?: { publicId?: string; fileName?: string; documentLabel?: string },
-) {
-  return apiRequest<{ document: unknown }>('/documents/mock', {
-    method: 'POST',
-    token,
-    body: { requestId, ...overrides },
-  });
-}
+// Placeholder document route — no longer called. It attached a fixed Cloudinary
+// asset to a request, so every warga downloaded the same file. Documents now
+// come from publishFilledForm below.
+//
+// export function generateDocument(
+//   token: string,
+//   requestId: string,
+//   overrides?: { publicId?: string; fileName?: string; documentLabel?: string },
+// ) {
+//   return apiRequest<{ document: unknown }>('/documents/mock', {
+//     method: 'POST',
+//     token,
+//     body: { requestId, ...overrides },
+//   });
+// }
 
 // Fills the official PDF template with the request's own form data, uploads it
 // to Cloudinary, and records it as a generated document.

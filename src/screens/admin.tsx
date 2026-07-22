@@ -37,6 +37,7 @@ import { serviceIcons, serviceOptions, services, statusOptions } from '@/constan
 import { colors } from '@/constants/theme';
 import { useApp } from '@/context/AppContext';
 import type { RequestStatus, ServiceType } from '@/types';
+import { hasFilledTemplate } from '@/utils/documentDispatch';
 import { formatDateTime, serviceLabel, sortByNewest } from '@/utils/format';
 
 function resolveDocumentUrl(url: string): string {
@@ -249,8 +250,13 @@ export function AdminPrintScreen() {
               <StatusBadge status={request.status} />
             </View>
             <View style={styles.printActions}>
-              <SecondaryButton title="Generate PDF" icon={FiPrinter} onPress={() => handleGenerate(request.id)} style={styles.printButton} />
-              <PrimaryButton title="Download" icon={FiDownload} onPress={() => handleGenerate(request.id)} style={styles.printButton} />
+              {request.generatedDocuments.length ? (
+                <PrimaryButton title="Download" icon={FiDownload} onPress={() => handleGenerate(request.id)} style={styles.printButton} />
+              ) : hasFilledTemplate(request.serviceType) ? (
+                <SecondaryButton title="Terbitkan Surat" icon={FiPrinter} onPress={() => handleGenerate(request.id)} style={styles.printButton} />
+              ) : (
+                <Text style={styles.printMeta}>Template dokumen belum tersedia.</Text>
+              )}
             </View>
           </View>
         ))

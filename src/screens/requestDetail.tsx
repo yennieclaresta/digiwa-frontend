@@ -185,7 +185,9 @@ export function StatusDetailScreen() {
               onPress={() => void openRemoteFile(doc.publicUrl || doc.downloadUrl)}
             />
           ))}
-          {usesTemplate(request) ? (
+          {/* Fallback only: the published letter above is the same document,
+              so this appears when publishing has not produced one yet. */}
+          {usesTemplate(request) && !request.generatedDocuments.length ? (
             <SecondaryButton
               title="Download Formulir Terisi"
               icon={FiFileText}
@@ -383,11 +385,18 @@ function AdminRequestDetailContent({
             />
           ))}
         </View>
-      ) : (
+      ) : usesTemplate(request) ? (
         <View style={styles.printActions}>
-          <SecondaryButton title="Generate PDF" icon={FiPrinter} onPress={handleGeneratePDF} loading={documentBusy} style={styles.printButton} />
-          <PrimaryButton title="Download" icon={FiDownload} onPress={handleGeneratePDF} loading={documentBusy} style={styles.printButton} />
+          <SecondaryButton
+            title="Terbitkan Surat"
+            icon={FiPrinter}
+            onPress={handleGeneratePDF}
+            loading={documentBusy}
+            style={styles.printButton}
+          />
         </View>
+      ) : (
+        <InfoBox>Template dokumen belum tersedia untuk layanan ini.</InfoBox>
       )}
     </Screen>
   );

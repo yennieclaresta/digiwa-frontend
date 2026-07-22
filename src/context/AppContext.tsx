@@ -3,7 +3,7 @@ import { createContext, ReactNode, useContext, useEffect, useState } from 'react
 
 import {
   createRequest as createRequestRequest,
-  generateDocument as generateDocumentRequest,
+  // generateDocument as generateDocumentRequest, // placeholder route — disabled, see api.ts
   getAdminDashboard,
   getMe,
   getRequest,
@@ -18,7 +18,7 @@ import {
   updateMyPassword,
 } from '@/services/api';
 
-import { getDispatchDocuments, hasFilledTemplate } from '@/utils/documentDispatch';
+import { hasFilledTemplate } from '@/utils/documentDispatch';
 
 import {
   mapAdminActivity,
@@ -307,18 +307,21 @@ export function AppProvider({ children }: { children: ReactNode }) {
     const updatedRequest = mapRequestDetail(response.request);
 
     if (status === 'selesai') {
-      // Akta letters are already published by the backend from the official
-      // template; only the mock-backed services need dispatching here.
-      const docsToDispatch = getDispatchDocuments(updatedRequest.serviceType);
-      await Promise.allSettled(
-        docsToDispatch.map((doc) =>
-          generateDocumentRequest(token, requestId, {
-            publicId: doc.publicId,
-            fileName: doc.fileName,
-            documentLabel: doc.documentLabel,
-          }),
-        ),
-      );
+      // Placeholder dispatch is disabled — see documentDispatch.ts. Akta
+      // letters are published by the backend from the official template as
+      // part of the status change, so the refresh below is enough to pick
+      // them up.
+      //
+      // const docsToDispatch = getDispatchDocuments(updatedRequest.serviceType);
+      // await Promise.allSettled(
+      //   docsToDispatch.map((doc) =>
+      //     generateDocumentRequest(token, requestId, {
+      //       publicId: doc.publicId,
+      //       fileName: doc.fileName,
+      //       documentLabel: doc.documentLabel,
+      //     }),
+      //   ),
+      // );
       const refreshedResponse = await getRequest(token, requestId);
       const refreshedRequest = mapRequestDetail(refreshedResponse.request);
       setRequests((previous) => mergeRequest(previous, refreshedRequest));
@@ -354,12 +357,15 @@ export function AppProvider({ children }: { children: ReactNode }) {
       throw new Error('Akses tidak diizinkan.');
     }
 
-    // Akta letters come from the official PDF template filled with the warga's
-    // own submission; everything else still uses the mock document catalogue.
+    // Only services with an official PDF template can produce a document. The
+    // placeholder route (`/documents/mock`) is deliberately not used any more:
+    // it handed every warga the same file regardless of their submission.
     const serviceType = requests.find((item) => item.id === requestId)?.serviceType;
-    const response = hasFilledTemplate(serviceType)
-      ? await publishFilledFormRequest(token, requestId)
-      : await generateDocumentRequest(token, requestId);
+    if (!hasFilledTemplate(serviceType)) {
+      throw new Error('Template dokumen belum tersedia untuk layanan ini.');
+    }
+
+    const response = await publishFilledFormRequest(token, requestId);
     const document = mapGeneratedDocument(response.document);
     const detailResponse = await getRequest(token, requestId);
     setRequests((previous) => mergeRequest(previous, mapRequestDetail(detailResponse.request)));
