@@ -132,7 +132,8 @@ export function getAdminDashboard(token: string) {
 }
 
 export function updateRequestStatus(token: string, requestId: string, body: Record<string, unknown>) {
-  return apiRequest<{ request: unknown; message: string }>(`/admin/requests/${requestId}/status`, {
+  // `warning` is set when the status saved but the generated letter did not.
+  return apiRequest<{ request: unknown; message: string; warning?: string }>(`/admin/requests/${requestId}/status`, {
     method: 'PATCH',
     token,
     body,
@@ -164,4 +165,13 @@ export function generateDocument(
     token,
     body: { requestId, ...overrides },
   });
+}
+
+// Fills the official PDF template with the request's own form data, uploads it
+// to Cloudinary, and records it as a generated document.
+export function publishFilledForm(token: string, requestId: string) {
+  return apiRequest<{ document: unknown; message: string }>(
+    `/requests/${requestId}/filled-form/publish`,
+    { method: 'POST', token },
+  );
 }

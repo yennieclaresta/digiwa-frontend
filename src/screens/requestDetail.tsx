@@ -21,8 +21,9 @@ import {
 } from '@/components/digiwa';
 import { serviceIcons, statusOptions } from '@/constants/services';
 import { colors } from '@/constants/theme';
-import { useApp } from '@/context/AppContext';
+import { useApp, type StatusUpdateResult } from '@/context/AppContext';
 import type { CitizenRequest, GeneratedDocument, RequestStatus, UploadedFile } from '@/types';
+import { hasFilledTemplate } from '@/utils/documentDispatch';
 import { formatDateTime, humanizeKey, serviceLabel } from '@/utils/format';
 
 function useRequestDetail() {
@@ -116,14 +117,8 @@ function latestDocument(request: CitizenRequest) {
   return request.generatedDocuments[0];
 }
 
-function hasFilledTemplate(request: CitizenRequest) {
-  return request.serviceType === 'akta_kelahiran' || request.serviceType === 'akta_kematian';
-}
-
-// Letters generated from the official PDF template the moment the request is
-// submitted; the rest of generatedDocuments only appears once it is `selesai`.
-function isPermohonanLetter(doc: { documentLabel?: string }) {
-  return (doc.documentLabel || '').startsWith('Surat Permohonan');
+function usesTemplate(request: CitizenRequest) {
+  return hasFilledTemplate(request.serviceType);
 }
 
 export function StatusDetailScreen() {
@@ -179,33 +174,10 @@ export function StatusDetailScreen() {
       <SectionTitle title="Berkas Diunggah" />
       <DocumentList files={request.uploadedFiles} />
 
-      {hasFilledTemplate(request) ? (
-        <>
-          <SectionTitle
-            title="Surat Permohonan"
-            subtitle="Formulir resmi yang terisi otomatis dari data pengajuan Anda."
-          />
-          {request.generatedDocuments.filter(isPermohonanLetter).map((doc) => (
-            <PrimaryButton
-              key={doc.id}
-              title={`Download ${doc.documentLabel || doc.fileName}`}
-              icon={FiDownload}
-              onPress={() => void openRemoteFile(doc.publicUrl || doc.downloadUrl)}
-            />
-          ))}
-          <SecondaryButton
-            title="Download Formulir Terisi"
-            icon={FiFileText}
-            onPress={handleDownloadFilledForm}
-            loading={filledFormBusy}
-          />
-        </>
-      ) : null}
-
       {request.status === 'selesai' ? (
         <>
           <SectionTitle title="Dokumen Tersedia" subtitle="Klik tombol di bawah untuk mengunduh dokumen Anda." />
-          {request.generatedDocuments.filter((doc) => !isPermohonanLetter(doc)).map((doc) => (
+          {request.generatedDocuments.map((doc) => (
             <PrimaryButton
               key={doc.id}
               title={`Download ${doc.documentLabel || doc.fileName}`}
@@ -213,9 +185,25 @@ export function StatusDetailScreen() {
               onPress={() => void openRemoteFile(doc.publicUrl || doc.downloadUrl)}
             />
           ))}
-          {!request.generatedDocuments.length && !hasFilledTemplate(request) ? (
+          {usesTemplate(request) ? (
+            <SecondaryButton
+              title="Download Formulir Terisi"
+              icon={FiFileText}
+              onPress={handleDownloadFilledForm}
+              loading={filledFormBusy}
+            />
+          ) : null}
+          {!request.generatedDocuments.length && !usesTemplate(request) ? (
             <InfoBox>Surat selesai diproses. Silakan ambil sesuai arahan petugas atau unduh jika tersedia.</InfoBox>
           ) : null}
+        </>
+      ) : usesTemplate(request) ? (
+        <>
+          <SectionTitle title="Surat Permohonan" />
+          <InfoBox>
+            Surat permohonan resmi akan diterbitkan otomatis dari data pengajuan Anda setelah petugas menyetujui
+            pengajuan ini.
+          </InfoBox>
         </>
       ) : null}
     </Screen>
@@ -259,7 +247,11 @@ function AdminRequestDetailContent({
 }: {
   request: CitizenRequest;
   setRequest: Dispatch<SetStateAction<CitizenRequest | null>>;
-  updateRequestStatus: (requestId: string, status: RequestStatus, adminNote?: string) => Promise<CitizenRequest>;
+  updateRequestStatus: (
+    requestId: string,
+    status: RequestStatus,
+    adminNote?: string,
+  ) => Promise<StatusUpdateResult>;
   generateDocument: (requestId: string) => Promise<GeneratedDocument>;
   downloadFilledForm: (request: CitizenRequest) => Promise<void>;
 }) {
@@ -279,9 +271,9 @@ function AdminRequestDetailContent({
     setSaving(true);
     setNoteError('');
     try {
-      const updated = await updateRequestStatus(request.id, status, adminNote);
+      const { request: updated, warning } = await updateRequestStatus(request.id, status, adminNote);
       setRequest(updated);
-      Alert.alert('Status berhasil diperbarui.');
+      Alert.alert(warning || 'Status berhasil diperbarui.');
     } catch (caught) {
       Alert.alert(caught instanceof Error ? caught.message : 'Gagal menyimpan data. Silakan coba lagi.');
     } finally {
@@ -344,7 +336,7 @@ function AdminRequestDetailContent({
       <SectionTitle title="Berkas Diunggah" />
       <DocumentList files={request.uploadedFiles} adminMode />
 
-      {hasFilledTemplate(request) ? (
+      {usesTemplate(request) ? (
         <>
           <SectionTitle title="Formulir Template" subtitle="Isi otomatis dari data pengajuan warga." />
           <SecondaryButton

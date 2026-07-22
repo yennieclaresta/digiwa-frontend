@@ -11,13 +11,14 @@ import {
   listRequests,
   login as loginRequest,
   markNotificationRead as markNotificationReadRequest,
+  publishFilledForm as publishFilledFormRequest,
   register as registerRequest,
   updateMe,
   updateRequestStatus as updateRequestStatusRequest,
   updateMyPassword,
 } from '@/services/api';
 
-import { getDispatchDocuments } from '@/utils/documentDispatch';
+import { getDispatchDocuments, hasFilledTemplate } from '@/utils/documentDispatch';
 
 import {
   mapAdminActivity,
@@ -83,13 +84,20 @@ type AppContextValue = {
     formData: Record<string, string>,
     uploadedFiles: UploadedFile[],
   ) => Promise<CitizenRequest>;
-  updateRequestStatus: (requestId: string, status: RequestStatus, adminNote?: string) => Promise<CitizenRequest>;
+  updateRequestStatus: (
+    requestId: string,
+    status: RequestStatus,
+    adminNote?: string,
+  ) => Promise<StatusUpdateResult>;
   markNotificationRead: (notificationId: string) => Promise<void>;
   generateDocument: (requestId: string) => Promise<GeneratedDocument>;
   downloadFilledForm: (request: CitizenRequest) => Promise<void>;
   updateProfile: (input: ProfileInput) => Promise<User>;
   changePassword: (input: PasswordInput) => Promise<void>;
 };
+
+/** `warning` is set when the status saved but the generated letter did not. */
+export type StatusUpdateResult = { request: CitizenRequest; warning?: string };
 
 const SESSION_KEY = 'DIGIWA_SESSION_TOKEN';
 
@@ -299,6 +307,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
     const updatedRequest = mapRequestDetail(response.request);
 
     if (status === 'selesai') {
+      // Akta letters are already published by the backend from the official
+      // template; only the mock-backed services need dispatching here.
       const docsToDispatch = getDispatchDocuments(updatedRequest.serviceType);
       await Promise.allSettled(
         docsToDispatch.map((doc) =>
@@ -313,12 +323,12 @@ export function AppProvider({ children }: { children: ReactNode }) {
       const refreshedRequest = mapRequestDetail(refreshedResponse.request);
       setRequests((previous) => mergeRequest(previous, refreshedRequest));
       await loadAppData(token, currentUser);
-      return refreshedRequest;
+      return { request: refreshedRequest, warning: response.warning };
     }
 
     setRequests((previous) => mergeRequest(previous, updatedRequest));
     await loadAppData(token, currentUser);
-    return updatedRequest;
+    return { request: updatedRequest, warning: response.warning };
   };
 
   const markNotificationRead = async (notificationId: string) => {
@@ -344,7 +354,12 @@ export function AppProvider({ children }: { children: ReactNode }) {
       throw new Error('Akses tidak diizinkan.');
     }
 
-    const response = await generateDocumentRequest(token, requestId);
+    // Akta letters come from the official PDF template filled with the warga's
+    // own submission; everything else still uses the mock document catalogue.
+    const serviceType = requests.find((item) => item.id === requestId)?.serviceType;
+    const response = hasFilledTemplate(serviceType)
+      ? await publishFilledFormRequest(token, requestId)
+      : await generateDocumentRequest(token, requestId);
     const document = mapGeneratedDocument(response.document);
     const detailResponse = await getRequest(token, requestId);
     setRequests((previous) => mergeRequest(previous, mapRequestDetail(detailResponse.request)));
