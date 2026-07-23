@@ -31,7 +31,7 @@ export function getDispatchDocuments(serviceType: ServiceType): DispatchDocument
   return DISPATCH_MAP[serviceType] ?? [];
 }
 
-const TEMPLATE_SERVICES: ServiceType[] = ['akta_kelahiran', 'akta_kematian'];
+const TEMPLATE_SERVICES: ServiceType[] = ['akta_kelahiran', 'akta_kematian', 'surat_rt_rw'];
 
 /** Services whose letter is produced from an official PDF template. */
 export function hasFilledTemplate(serviceType?: ServiceType) {

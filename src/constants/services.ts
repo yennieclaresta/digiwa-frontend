@@ -338,6 +338,12 @@ export const services: ServiceConfig[] = [
           { name: 'nik', label: 'NIK', required: true, validation: 'nik', type: 'number' },
           { name: 'nomorKk', label: 'Nomor KK', required: true, validation: 'kk', type: 'number' },
           { name: 'nomorHp', label: 'Nomor HP', required: true, validation: 'phone', type: 'number' },
+          // Printed on the official RT/RW letter template.
+          { name: 'tempatLahir', label: 'Tempat Lahir', required: true },
+          { name: 'tanggalLahir', label: 'Tanggal Lahir', required: true, validation: 'date', type: 'date' },
+          { name: 'jenisKelamin', label: 'Jenis Kelamin', required: true, type: 'select', options: genderOptions },
+          { name: 'pekerjaan', label: 'Pekerjaan', required: true },
+          { name: 'agama', label: 'Agama', required: true },
           { name: 'alamat', label: 'Alamat', required: true, type: 'textarea' },
           { name: 'rt', label: 'RT', required: true, type: 'number' },
           { name: 'rw', label: 'RW', required: true, type: 'number' },
